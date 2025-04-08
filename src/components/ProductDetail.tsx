@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Star, ShoppingCart, Heart, ArrowLeft } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { Product } from '../types';
 import { formatPrice } from '../utils/format';
 import { products } from '../data/products';
@@ -13,8 +14,28 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const product = products.find(p => p.id === Number(id));
+
+  // Simulate loading effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-center">
+          <div className="h-8 w-64 bg-gray-200 rounded mx-auto mb-4"></div>
+          <div className="h-4 w-48 bg-gray-200 rounded mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -23,7 +44,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
           <h2 className="text-2xl font-bold mb-4">Product not found</h2>
           <button
             onClick={() => navigate('/')}
-            className="text-red-600 hover:text-red-700 flex items-center"
+            className="text-red-600 hover:text-red-700 flex items-center mx-auto"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             Back to Home
@@ -33,11 +54,19 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
     );
   }
 
+  const handleAddToCart = () => {
+    onAddToCart(product);
+    toast.success(`${product.name} added to cart!`, {
+      icon: '🛒',
+      duration: 2000,
+    });
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fadeIn">
       <button
         onClick={() => navigate('/')}
-        className="mb-8 text-gray-600 hover:text-gray-800 flex items-center"
+        className="mb-8 text-gray-600 hover:text-gray-800 flex items-center transition-colors"
       >
         <ArrowLeft className="h-5 w-5 mr-2" />
         Back to Products
@@ -45,11 +74,11 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <div className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden">
+          <div className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden shadow-lg">
             <img
               src={product.images?.[selectedImage] || product.image}
               alt={product.name}
-              className="w-full h-full object-center object-cover"
+              className="w-full h-full object-center object-cover transition-transform duration-300 hover:scale-105"
             />
           </div>
           {product.images && (
@@ -58,9 +87,8 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden ${
-                    selectedImage === index ? 'ring-2 ring-red-500' : ''
-                  }`}
+                  className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden transition-all duration-200 ${selectedImage === index ? 'ring-2 ring-red-500 scale-105' : 'hover:scale-105'
+                    }`}
                 >
                   <img
                     src={image}
@@ -84,11 +112,10 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-5 w-5 ${
-                    i < Math.floor(product.rating)
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
-                  }`}
+                  className={`h-5 w-5 ${i < Math.floor(product.rating)
+                    ? 'text-yellow-400 fill-current'
+                    : 'text-gray-300'
+                    }`}
                 />
               ))}
             </div>
@@ -127,13 +154,13 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
 
           <div className="flex space-x-4">
             <button
-              onClick={() => onAddToCart(product)}
-              className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-red-700"
+              onClick={handleAddToCart}
+              className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-red-700 transition-colors"
             >
               <ShoppingCart className="h-5 w-5" />
               <span>Add to Cart</span>
             </button>
-            <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
               <Heart className="h-6 w-6 text-gray-600" />
             </button>
           </div>

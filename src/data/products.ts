@@ -159,6 +159,111 @@ export const products: Product[] = [
       "Connectivity": "Wi-Fi 6E, 5G",
       "OS": "iPadOS 17"
     }
+  },
+  {
+    id: 7,
+    name: "OnePlus 11 5G",
+    brand: "OnePlus",
+    price: 799,
+    originalPrice: 899,
+    image: "https://tinyurl.com/53xc9u3z",
+    images: [
+      "https://tinyurl.com/53xc9u3z",
+      "https://tinyurl.com/53xc9u3z",
+      "https://tinyurl.com/53xc9u3z"
+    ],
+    rating: 4.7,
+    reviews: 132,
+    category: "Smartphones",
+    stock: 35,
+    description: "Flagship killer with Snapdragon 8 Gen 2, 120Hz AMOLED display, and Hasselblad cameras.",
+    specifications: {
+      "Display": "6.7-inch QHD+ AMOLED, 120Hz",
+      "Processor": "Snapdragon 8 Gen 2",
+      "RAM": "16GB",
+      "Storage": "256GB",
+      "Camera": "50MP Main + 48MP Ultra Wide + 32MP Telephoto",
+      "Battery": "5000mAh",
+      "OS": "Android 13"
+    }
+  },
+  {
+    id: 8,
+    name: "HP Spectre x360",
+    brand: "HP",
+    price: 1799,
+    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed",
+    images: [
+      "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed",
+      "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed",
+      "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed"
+    ],
+    rating: 4.6,
+    reviews: 98,
+    category: "Laptops",
+    stock: 22,
+    description: "Premium 2-in-1 laptop with OLED touchscreen, Intel Core i7, and long battery life.",
+    specifications: {
+      "Display": "13.5-inch OLED Touchscreen",
+      "Processor": "Intel Core i7-13700H",
+      "RAM": "16GB LPDDR5",
+      "Storage": "1TB SSD",
+      "Graphics": "Intel Iris Xe",
+      "Battery": "17 hours",
+      "OS": "Windows 11"
+    }
+  },
+  {
+    id: 9,
+    name: "Samsung Galaxy Tab S9 Ultra",
+    brand: "Samsung",
+    price: 1199,
+    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0",
+    images: [
+      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0",
+      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0",
+      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0"
+    ],
+    rating: 4.8,
+    reviews: 145,
+    category: "Tablets",
+    stock: 27,
+    description: "Ultra-large AMOLED tablet with S Pen support and Snapdragon 8 Gen 2 chip.",
+    specifications: {
+      "Display": "14.6-inch Super AMOLED, 120Hz",
+      "Processor": "Snapdragon 8 Gen 2",
+      "RAM": "12GB",
+      "Storage": "512GB",
+      "Camera": "13MP Main + 6MP Ultra Wide",
+      "Battery": "11200mAh",
+      "OS": "Android 14 with One UI"
+    }
+  },
+  {
+    id: 10,
+    name: "Bose QuietComfort Ultra",
+    brand: "Bose",
+    price: 349,
+    image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb",
+    images: [
+      "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb",
+      "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb",
+      "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb"
+    ],
+    rating: 4.9,
+    reviews: 268,
+    category: "Accessories",
+    stock: 80,
+    description: "Immersive noise-canceling headphones with adaptive sound technology.",
+    specifications: {
+      "Type": "Over-ear Wireless",
+      "Battery Life": "30 hours",
+      "Noise Cancellation": "Advanced ANC",
+      "Connectivity": "Bluetooth 5.3",
+      "Charging": "USB-C",
+      "Weight": "260g",
+      "Features": "Multi-device pairing, Touch controls"
+    }
   }
 ];
 

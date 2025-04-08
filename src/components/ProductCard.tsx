@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star, ShoppingCart, Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 import { formatPrice } from '../utils/format';
 
@@ -9,8 +10,22 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  const navigate = useNavigate();
+
+  const handleProductClick = () => {
+    navigate(`/product/${product.id}`);
+  };
+
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking the Add to Cart button
+    onAddToCart(product);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden group">
+    <div
+      className="bg-white rounded-lg shadow-md overflow-hidden group cursor-pointer"
+      onClick={handleProductClick}
+    >
       <div className="relative overflow-hidden">
         <img
           src={product.image}
@@ -19,11 +34,12 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         />
         <button
           className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+          onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking the heart button
         >
           <Heart className="h-5 w-5 text-gray-600" />
         </button>
       </div>
-      
+
       <div className="p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-gray-500">{product.brand}</span>
@@ -32,9 +48,9 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
             <span className="ml-1 text-sm text-gray-600">{product.rating}</span>
           </div>
         </div>
-        
+
         <h3 className="text-lg font-semibold text-gray-800 mb-2">{product.name}</h3>
-        
+
         <div className="flex items-center justify-between mb-4">
           <div>
             <span className="text-xl font-bold text-gray-900">{formatPrice(product.price)}</span>
@@ -48,7 +64,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         </div>
 
         <button
-          onClick={() => onAddToCart(product)}
+          onClick={handleAddToCartClick}
           className="w-full bg-red-600 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-red-700 transition-colors"
         >
           <ShoppingCart className="h-5 w-5" />
