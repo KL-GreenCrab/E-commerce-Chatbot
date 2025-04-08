@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, ChevronDown, LogOut } from 'lucide-react';
 import { CartItem } from '../types';
 import { categories } from '../data/products';
 import SearchBar from './SearchBar';
+import { useAuth } from '../hooks/useAuth';
 
 interface HeaderProps {
   cartItems: CartItem[];
@@ -14,7 +15,8 @@ export default function Header({ cartItems, onCartClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const navigate = useNavigate();
-  
+  const { user, logout } = useAuth();
+
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -66,13 +68,27 @@ export default function Header({ cartItems, onCartClick }: HeaderProps) {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Link
-                to="/login"
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                <User className="h-6 w-6 text-gray-700" />
-              </Link>
-              <button 
+              {user ? (
+                <div className="flex items-center space-x-4">
+                  <Link to="/profile" className="flex items-center text-gray-700 hover:text-blue-600">
+                    <User className="h-5 w-5 mr-1" />
+                    <span>{user.name}</span>
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="flex items-center text-gray-700 hover:text-red-600"
+                  >
+                    <LogOut className="h-5 w-5 mr-1" />
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <Link to="/login" className="text-gray-700 hover:text-blue-600">Đăng nhập</Link>
+                  <Link to="/register" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Đăng ký</Link>
+                </div>
+              )}
+              <button
                 className="p-2 hover:bg-gray-100 rounded-full relative"
                 onClick={onCartClick}
               >
@@ -86,7 +102,7 @@ export default function Header({ cartItems, onCartClick }: HeaderProps) {
             </div>
           </div>
 
-          <button 
+          <button
             className="md:hidden p-2"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >

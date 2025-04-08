@@ -10,6 +10,7 @@ import Cart from './components/Cart';
 import LoginForm from './components/Auth/LoginForm';
 import RegisterForm from './components/Auth/RegisterForm';
 import CategoryPage from './components/CategoryPage';
+import { UserProfile } from './components/User/UserProfile';
 
 import { AuthProvider } from './hooks/useAuth';
 import { products } from './data/products';
@@ -41,15 +42,23 @@ function App() {
 
   const handleAddToCart = (product: Product) => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id);
+      const existingItem = prevItems.find(item => item.productId === product.id);
       if (existingItem) {
         return prevItems.map(item =>
-          item.id === product.id
+          item.productId === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prevItems, { ...product, quantity: 1 }];
+      return [...prevItems, {
+        id: Date.now(),
+        productId: product.id,
+        name: product.name,
+        brand: product.brand,
+        price: product.price,
+        image: product.image,
+        quantity: 1
+      }];
     });
 
     toast.success(`${product.name} added to cart`, {
@@ -145,6 +154,7 @@ function App() {
                   </main>
                 </>
               } />
+              <Route path="/profile" element={<UserProfile />} />
             </Routes>
           </PageTransition>
 
