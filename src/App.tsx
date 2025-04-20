@@ -6,15 +6,18 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import ProductCard from './components/ProductCard';
 import ProductDetail from './components/ProductDetail';
-import Cart from './components/Cart';
+import { Cart } from './components/Cart/Cart';
 import LoginForm from './components/Auth/LoginForm';
 import RegisterForm from './components/Auth/RegisterForm';
-import CategoryPage from './components/CategoryPage';
+import CategoryPage from './components/Categories/CategoryPage';
 import { UserProfile } from './components/User/UserProfile';
+import Footer from './components/Footer';
+import { Checkout } from './components/Checkout/Checkout';
+import { OrderSuccess } from './components/Checkout/OrderSuccess';
 
 import { AuthProvider } from './hooks/useAuth';
 import { products } from './data/products';
-import { CartItem, Product } from './types';
+import { CartItem, Product, OrderData } from './types';
 
 // Wrapper component to handle page transitions
 function PageTransition({ children }: { children: React.ReactNode }) {
@@ -34,6 +37,10 @@ function App() {
     return savedCart ? JSON.parse(savedCart) : [];
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [selectedPriceRange, setSelectedPriceRange] = useState<{ min: number; max: number } | null>(null);
 
   // Save cart items to localStorage whenever they change
   React.useEffect(() => {
@@ -79,18 +86,84 @@ function App() {
     );
   };
 
-  const handleRemoveItem = (id: number) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
-    toast.success('Item removed from cart', {
+  const handleRemoveItem = (productId: number) => {
+    setCartItems(prevItems => {
+      const updatedItems = prevItems.filter(item => item.productId !== productId);
+      // Save to localStorage
+      localStorage.setItem('cart', JSON.stringify(updatedItems));
+      return updatedItems;
+    });
+    toast.success('Đã xóa sản phẩm khỏi giỏ hàng', {
       icon: '🗑️',
       duration: 2000,
     });
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // Add your search logic here
+  };
+
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+  };
+
+  const handleBrandSelect = (brand: string) => {
+    setSelectedBrand(brand);
+  };
+
+  const handlePriceRangeSelect = (min: number, max: number) => {
+    setSelectedPriceRange({ min, max });
+  };
+
+  // Filter products based on selected criteria
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = !searchQuery ||
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCategory = !selectedCategory ||
+      product.category === selectedCategory;
+
+    const matchesBrand = !selectedBrand ||
+      product.brand === selectedBrand;
+
+    const matchesPrice = !selectedPriceRange ||
+      (product.price >= selectedPriceRange.min && product.price <= selectedPriceRange.max);
+
+    return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
+  });
+
+  const getTotal = () => {
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
+  const handlePlaceOrder = async (orderData: OrderData) => {
+    try {
+      // TODO: Gọi API để tạo đơn hàng
+      // const order = await createOrder({
+      //     ...orderData,
+      //     items: cartItems,
+      //     total: getTotal(),
+      //     userId: user?.id
+      // });
+
+      // Xóa giỏ hàng sau khi đặt hàng thành công
+      setCartItems([]);
+      localStorage.removeItem('cart');
+
+      toast.success('Đặt hàng thành công!');
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+      throw error;
+    }
+  };
+
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen flex flex-col">
           <Toaster
             position="top-right"
             toastOptions={{
@@ -119,44 +192,66 @@ function App() {
           <Header
             cartItems={cartItems}
             onCartClick={() => setIsCartOpen(true)}
+            onSearch={handleSearch}
+            onCategorySelect={handleCategorySelect}
+            onBrandSelect={handleBrandSelect}
+            onPriceRangeSelect={handlePriceRangeSelect}
           />
 
-          <PageTransition>
-            <Routes>
-              <Route path="/login" element={<LoginForm />} />
-              <Route path="/register" element={<RegisterForm />} />
-              <Route path="/product/:id" element={
-                <ProductDetail onAddToCart={handleAddToCart} />
-              } />
-              <Route path="/category/:categoryId" element={
-                <CategoryPage onAddToCart={handleAddToCart} />
-              } />
-              <Route path="/" element={
-                <>
-                  <Hero />
-                  <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    <section>
-                      <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-2xl font-bold text-gray-900">Featured Products</h2>
-                        <button className="text-red-600 hover:text-red-700">View All</button>
-                      </div>
+          <main className="flex-grow pt-16">
+            <PageTransition>
+              <Routes>
+                <Route path="/login" element={<LoginForm />} />
+                <Route path="/register" element={<RegisterForm />} />
+                <Route path="/product/:id" element={
+                  <ProductDetail onAddToCart={handleAddToCart} />
+                } />
+                <Route path="/category/:categoryId" element={
+                  <CategoryPage onAddToCart={handleAddToCart} />
+                } />
+                <Route path="/" element={
+                  <>
+                    <Hero />
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                      <section>
+                        <div className="flex justify-between items-center mb-8">
+                          <h2 className="text-2xl font-bold text-gray-900">Featured Products</h2>
+                          <button className="text-red-600 hover:text-red-700">View All</button>
+                        </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {products.map(product => (
-                          <ProductCard
-                            key={product.id}
-                            product={product}
-                            onAddToCart={handleAddToCart}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  </main>
-                </>
-              } />
-              <Route path="/profile" element={<UserProfile />} />
-            </Routes>
-          </PageTransition>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {filteredProducts.map(product => (
+                            <ProductCard
+                              key={product.id}
+                              product={product}
+                              onAddToCart={handleAddToCart}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    </main>
+                  </>
+                } />
+                <Route path="/profile" element={<UserProfile />} />
+                <Route
+                  path="/checkout"
+                  element={
+                    <Checkout
+                      cartItems={cartItems}
+                      total={getTotal()}
+                      onPlaceOrder={handlePlaceOrder}
+                    />
+                  }
+                />
+                <Route
+                  path="/order-success"
+                  element={<OrderSuccess />}
+                />
+              </Routes>
+            </PageTransition>
+          </main>
+
+          <Footer />
 
           <Cart
             isOpen={isCartOpen}

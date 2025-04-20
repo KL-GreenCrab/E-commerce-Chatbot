@@ -3,6 +3,8 @@ import { Star, ShoppingCart, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 import { formatPrice } from '../utils/format';
+import { useAuth } from '../hooks/useAuth';
+import { toast } from 'react-hot-toast';
 
 interface ProductCardProps {
   product: Product;
@@ -11,14 +13,23 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleProductClick = () => {
     navigate(`/product/${product.id}`);
   };
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation when clicking the Add to Cart button
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error('Please login to add items to cart');
+      navigate('/login');
+      return;
+    }
+
     onAddToCart(product);
+    toast.success(`${product.name} added to cart`);
   };
 
   return (
@@ -34,7 +45,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         />
         <button
           className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-          onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking the heart button
+          onClick={(e) => e.stopPropagation()}
         >
           <Heart className="h-5 w-5 text-gray-600" />
         </button>
@@ -49,27 +60,24 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           </div>
         </div>
 
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">{product.name}</h3>
+        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
 
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <span className="text-xl font-bold text-gray-900">{formatPrice(product.price)}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-gray-900">{formatPrice(product.price)}</span>
             {product.originalPrice && (
-              <span className="ml-2 text-sm text-gray-500 line-through">
+              <span className="text-sm text-gray-500 line-through">
                 {formatPrice(product.originalPrice)}
               </span>
             )}
           </div>
-          <span className="text-sm text-gray-500">{product.reviews} reviews</span>
+          <button
+            className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+            onClick={handleAddToCartClick}
+          >
+            <ShoppingCart className="h-5 w-5" />
+          </button>
         </div>
-
-        <button
-          onClick={handleAddToCartClick}
-          className="w-full bg-red-600 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-red-700 transition-colors"
-        >
-          <ShoppingCart className="h-5 w-5" />
-          <span>Add to Cart</span>
-        </button>
       </div>
     </div>
   );

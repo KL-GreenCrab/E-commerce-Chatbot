@@ -28,6 +28,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  fullName: string;
+  phone: string;
   avatar?: string;
   password?: string;
 }
@@ -68,4 +70,14 @@ export interface Order {
   };
   paymentMethod: 'credit_card' | 'bank_transfer' | 'cash_on_delivery';
   createdAt: string;
+}
+
+export interface OrderData {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  paymentMethod: 'cod' | 'bank';
+  note?: string;
 }
