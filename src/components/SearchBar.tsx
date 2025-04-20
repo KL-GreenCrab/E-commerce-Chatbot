@@ -23,13 +23,13 @@ export default function SearchBar({ onProductSelect }: SearchBarProps) {
 
   const filteredProducts = products.filter(product => {
     const matchesQuery = product.name.toLowerCase().includes(query.toLowerCase()) ||
-                        product.brand.toLowerCase().includes(query.toLowerCase());
-    const matchesPrice = product.price >= filters.priceRange[0] && 
-                        product.price <= filters.priceRange[1];
-    const matchesBrand = filters.brands.length === 0 || 
-                        filters.brands.includes(product.brand);
-    const matchesCategory = filters.categories.length === 0 || 
-                          filters.categories.includes(product.category);
+      product.brand.toLowerCase().includes(query.toLowerCase());
+    const matchesPrice = product.price >= filters.priceRange[0] &&
+      product.price <= filters.priceRange[1];
+    const matchesBrand = filters.brands.length === 0 ||
+      filters.brands.includes(product.brand);
+    const matchesCategory = filters.categories.length === 0 ||
+      filters.categories.includes(product.category);
     const matchesRating = product.rating >= filters.rating;
 
     return matchesQuery && matchesPrice && matchesBrand && matchesCategory && matchesRating;
@@ -56,6 +56,7 @@ export default function SearchBar({ onProductSelect }: SearchBarProps) {
             setQuery(e.target.value);
             setShowResults(true);
           }}
+          onFocus={() => setShowResults(true)}
           placeholder="Search products..."
           className="w-full md:w-96 px-4 py-2 pl-10 pr-12 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500"
         />
@@ -126,7 +127,7 @@ export default function SearchBar({ onProductSelect }: SearchBarProps) {
         </div>
       )}
 
-      {showResults && query.length > 0 && (
+      {showResults && query && (
         <div className="absolute top-12 left-0 right-0 bg-white rounded-lg shadow-lg overflow-hidden z-50">
           {filteredProducts.length > 0 ? (
             <div className="max-h-96 overflow-y-auto">

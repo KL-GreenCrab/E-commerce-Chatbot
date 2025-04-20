@@ -140,11 +140,6 @@ export default function Header({
               >
                 <Filter className="h-4 w-4" />
                 <span>Filters</span>
-                {(selectedBrand || selectedPriceRange) && (
-                  <span className="ml-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {(selectedBrand ? 1 : 0) + (selectedPriceRange ? 1 : 0)}
-                  </span>
-                )}
               </button>
 
               {isFilterDropdownOpen && (
