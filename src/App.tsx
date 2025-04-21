@@ -14,6 +14,8 @@ import { UserProfile } from './components/User/UserProfile';
 import Footer from './components/Footer';
 import { Checkout } from './components/Checkout/Checkout';
 import { OrderSuccess } from './components/Checkout/OrderSuccess';
+import { OrderList } from './components/Order/OrderList';
+import { OrderDetail } from './components/Order/OrderDetail';
 
 import { AuthProvider } from './hooks/useAuth';
 import { products } from './data/products';
@@ -49,17 +51,17 @@ function App() {
 
   const handleAddToCart = (product: Product) => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.productId === product.id);
+      const existingItem = prevItems.find(item => item.productId === product.id.toString());
       if (existingItem) {
         return prevItems.map(item =>
-          item.productId === product.id
+          item.productId === product.id.toString()
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
       return [...prevItems, {
         id: Date.now(),
-        productId: product.id,
+        productId: product.id.toString(),
         name: product.name,
         brand: product.brand,
         price: product.price,
@@ -76,7 +78,7 @@ function App() {
 
   const handleUpdateQuantity = (id: number, quantity: number) => {
     if (quantity === 0) {
-      handleRemoveItem(id);
+      handleRemoveItem(id.toString());
       return;
     }
     setCartItems(prevItems =>
@@ -86,7 +88,7 @@ function App() {
     );
   };
 
-  const handleRemoveItem = (productId: number) => {
+  const handleRemoveItem = (productId: string) => {
     setCartItems(prevItems => {
       const updatedItems = prevItems.filter(item => item.productId !== productId);
       // Save to localStorage
@@ -133,6 +135,16 @@ function App() {
 
     return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
   });
+
+  // Get search results based on query parameter
+  const getSearchResults = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('q') || '';
+    return products.filter(product =>
+      product.name.toLowerCase().includes(query.toLowerCase()) ||
+      product.brand.toLowerCase().includes(query.toLowerCase())
+    );
+  };
 
   const getTotal = () => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -209,6 +221,29 @@ function App() {
                 <Route path="/category/:categoryId" element={
                   <CategoryPage onAddToCart={handleAddToCart} />
                 } />
+                <Route path="/search" element={
+                  <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <section>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {getSearchResults().map(product => (
+                          <ProductCard
+                            key={product.id}
+                            product={product}
+                            onAddToCart={handleAddToCart}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  </main>
+                } />
+                <Route path="/checkout" element={
+                  <Checkout
+                    cartItems={cartItems}
+                    total={getTotal()}
+                    onPlaceOrder={handlePlaceOrder}
+                  />
+                } />
+                <Route path="/order-success" element={<OrderSuccess />} />
                 <Route path="/" element={
                   <>
                     <Hero />
@@ -220,7 +255,7 @@ function App() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {filteredProducts.map(product => (
+                          {products.map(product => (
                             <ProductCard
                               key={product.id}
                               product={product}
@@ -232,21 +267,9 @@ function App() {
                     </main>
                   </>
                 } />
+                <Route path="/profile/orders" element={<OrderList />} />
+                <Route path="/profile/orders/:orderId" element={<OrderDetail />} />
                 <Route path="/profile" element={<UserProfile />} />
-                <Route
-                  path="/checkout"
-                  element={
-                    <Checkout
-                      cartItems={cartItems}
-                      total={getTotal()}
-                      onPlaceOrder={handlePlaceOrder}
-                    />
-                  }
-                />
-                <Route
-                  path="/order-success"
-                  element={<OrderSuccess />}
-                />
               </Routes>
             </PageTransition>
           </main>

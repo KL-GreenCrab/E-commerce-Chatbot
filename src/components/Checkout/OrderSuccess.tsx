@@ -1,8 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 
 export const OrderSuccess: React.FC = () => {
+    const location = useLocation();
+    const orderId = location.state?.orderId;
+
     return (
         <div className="container mx-auto px-4 py-16">
             <div className="max-w-2xl mx-auto text-center">
@@ -17,11 +20,20 @@ export const OrderSuccess: React.FC = () => {
                 </p>
 
                 <div className="space-y-4">
+                    {orderId && (
+                        <Link
+                            to={`/profile/orders/${orderId}`}
+                            className="inline-block bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors"
+                        >
+                            Xem chi tiết đơn hàng
+                        </Link>
+                    )}
+
                     <Link
-                        to="/orders"
-                        className="inline-block bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors"
+                        to="/profile/orders"
+                        className="inline-block bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors"
                     >
-                        Xem đơn hàng của tôi
+                        Xem tất cả đơn hàng
                     </Link>
 
                     <div>

@@ -10,7 +10,7 @@ interface CartProps {
     onClose: () => void;
     items: CartItem[];
     onUpdateQuantity: (id: number, quantity: number) => void;
-    onRemoveItem: (id: number) => void;
+    onRemoveItem: (productId: string) => void;
 }
 
 export const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem }) => {
@@ -23,6 +23,18 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, onUpdateQuan
     };
 
     const isEmpty = items.length === 0;
+
+    const handleUpdateQuantity = (id: string, quantity: number) => {
+        if (quantity === 0) {
+            onRemoveItem(id);
+            return;
+        }
+        onUpdateQuantity(parseInt(id), quantity);
+    };
+
+    const handleRemoveItem = (productId: string) => {
+        onRemoveItem(productId);
+    };
 
     return (
         <div className="fixed inset-0 bg-gray-100 z-50 overflow-y-auto">
@@ -70,7 +82,7 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, onUpdateQuan
 
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
+                                                    onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
                                                     className="p-1 rounded-full hover:bg-gray-100"
                                                 >
                                                     <Minus className="w-4 h-4" />
@@ -79,7 +91,7 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, onUpdateQuan
                                                 <span className="w-8 text-center">{item.quantity}</span>
 
                                                 <button
-                                                    onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
+                                                    onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
                                                     className="p-1 rounded-full hover:bg-gray-100"
                                                 >
                                                     <Plus className="w-4 h-4" />
@@ -91,7 +103,7 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, onUpdateQuan
                                                     {formatPrice(item.price * item.quantity)}
                                                 </p>
                                                 <button
-                                                    onClick={() => onRemoveItem(item.productId)}
+                                                    onClick={() => handleRemoveItem(item.productId)}
                                                     className="text-red-500 hover:text-red-600 mt-2 flex items-center gap-1"
                                                     title="Xóa sản phẩm"
                                                 >
@@ -130,6 +142,7 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, onUpdateQuan
                                 {user ? (
                                     <Link
                                         to="/checkout"
+                                        onClick={() => onClose()}
                                         className="block w-full bg-red-600 text-white py-3 px-4 rounded-lg text-center hover:bg-red-700 transition-colors"
                                     >
                                         Thanh toán
@@ -137,6 +150,7 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, onUpdateQuan
                                 ) : (
                                     <Link
                                         to="/login"
+                                        onClick={() => onClose()}
                                         className="block w-full bg-red-600 text-white py-3 px-4 rounded-lg text-center hover:bg-red-700 transition-colors"
                                     >
                                         Đăng nhập để thanh toán

@@ -16,12 +16,12 @@ export interface Product {
 
 export interface CartItem {
   id: number;
-  productId: number;
+  productId: string;
   name: string;
   brand: string;
   price: number;
-  quantity: number;
   image: string;
+  quantity: number;
 }
 
 export interface User {
@@ -58,7 +58,7 @@ export interface Order {
   userId: string;
   items: CartItem[];
   total: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'processing' | 'completed' | 'cancelled';
   shippingAddress: {
     fullName: string;
@@ -70,6 +70,8 @@ export interface Order {
   };
   paymentMethod: 'credit_card' | 'bank_transfer' | 'cash_on_delivery';
   createdAt: string;
+  orderNumber?: string;
+  date?: string;
 }
 
 export interface OrderData {

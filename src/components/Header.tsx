@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu, ChevronDown, LogOut, X, Filter } from 'lucide-react';
 import { CartItem } from '../types';
 import { categories, products } from '../data/products';
-import SearchBar from './SearchBar';
+import { SearchBar } from './SearchBar';
 import { useAuth } from '../hooks/useAuth';
 
 interface HeaderProps {
@@ -47,11 +47,15 @@ export default function Header({
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSearch && searchQuery.trim()) {
-      onSearch(searchQuery.trim());
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    if (searchQuery.trim()) {
+      handleSearch(searchQuery.trim());
     }
   };
 
@@ -220,30 +224,12 @@ export default function Header({
               )}
             </div>
 
-            <form onSubmit={handleSearch} className="relative">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <Search className="h-4 w-4" />
-              </button>
-            </form>
+            <SearchBar
+              onSearch={handleSearch}
+              onSelect={(product) => {
+                navigate(`/product/${product.id}`);
+              }}
+            />
           </div>
 
           <div className="flex items-center space-x-4">
@@ -277,7 +263,7 @@ export default function Header({
                       Profile
                     </Link>
                     <Link
-                      to="/orders"
+                      to="/profile/orders"
                       className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                       onClick={() => setIsMenuOpen(false)}
                     >
@@ -318,7 +304,7 @@ export default function Header({
         {isMenuOpen && (
           <div className="md:hidden py-4">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <form onSubmit={handleSearch} className="relative mb-4">
+              <form onSubmit={handleFormSubmit} className="relative mb-4">
                 <input
                   type="text"
                   placeholder="Search products..."

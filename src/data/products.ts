@@ -166,11 +166,11 @@ export const products: Product[] = [
     brand: "OnePlus",
     price: 799,
     originalPrice: 899,
-    image: "https://tinyurl.com/53xc9u3z",
+    image: "https://tinyurl.com/3wxjuusv",
     images: [
-      "https://tinyurl.com/53xc9u3z",
-      "https://tinyurl.com/53xc9u3z",
-      "https://tinyurl.com/53xc9u3z"
+      "https://tinyurl.com/3wxjuusv",
+      "https://tinyurl.com/3wxjuusv",
+      "https://tinyurl.com/3wxjuusv"
     ],
     rating: 4.7,
     reviews: 132,

@@ -1,70 +1,83 @@
-import { CartItem, Order as OrderType } from '../types';
+import { CartItem, Order, OrderData } from '../types';
 
-export interface Order {
-    id: string;
-    userId: string;
-    items: CartItem[];
-    total: number;
-    status: 'pending' | 'processing' | 'completed' | 'cancelled';
-    paymentStatus: 'pending' | 'processing' | 'completed' | 'cancelled';
-    shippingAddress: {
-        fullName: string;
-        address: string;
-        city: string;
-        state: string;
-        zipCode: string;
-        phone: string;
+const ORDER_STORAGE_KEY = 'orders';
+
+export const saveOrder = (orderData: OrderData, items: CartItem[], total: number, userId: string): Order => {
+    const orders = getOrders();
+    const newOrder: Order = {
+        id: Date.now().toString(),
+        userId,
+        orderNumber: `ORD-${Date.now()}`,
+        date: new Date().toISOString(),
+        status: 'pending',
+        total,
+        items,
+        shippingAddress: {
+            fullName: orderData.fullName,
+            address: orderData.address,
+            city: orderData.city,
+            state: '',
+            zipCode: '',
+            phone: orderData.phone
+        },
+        paymentMethod: orderData.paymentMethod === 'cod' ? 'cash_on_delivery' : 'bank_transfer',
+        paymentStatus: 'pending',
+        createdAt: new Date().toISOString()
     };
-    paymentMethod: 'credit_card' | 'bank_transfer' | 'cash_on_delivery';
-    createdAt: string;
-}
 
-// Lưu đơn hàng vào localStorage
-export const saveOrder = (order: Order): void => {
-    const orders = getOrders(order.userId);
-    orders.push(order);
-    localStorage.setItem(`orders_${order.userId}`, JSON.stringify(orders));
+    orders.push(newOrder);
+    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders));
+    return newOrder;
 };
 
-// Lấy danh sách đơn hàng của người dùng
-export const getOrders = (userId: string): Order[] => {
-    const orders = localStorage.getItem(`orders_${userId}`);
-    return orders ? JSON.parse(orders) : [];
+export const getOrders = (): Order[] => {
+    const ordersJson = localStorage.getItem(ORDER_STORAGE_KEY);
+    return ordersJson ? JSON.parse(ordersJson) : [];
+};
+
+export const getOrderById = (orderId: string): Order | undefined => {
+    const orders = getOrders();
+    return orders.find(order => order.id === orderId);
 };
 
 // Tạo đơn hàng mới
 export const createOrder = (
-    userId: string,
-    items: CartItem[],
-    shippingAddress: Order['shippingAddress'],
-    paymentMethod: Order['paymentMethod']
+    orderData: OrderData & { userId: string },
+    items: CartItem[]
 ): Order => {
-    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
+    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const order: Order = {
         id: generateOrderId(),
-        userId,
-        items,
-        total,
+        userId: orderData.userId,
+        orderNumber: `ORD-${Date.now()}`,
+        date: new Date().toISOString(),
         status: 'pending',
+        total,
+        items,
+        shippingAddress: {
+            fullName: orderData.fullName,
+            address: orderData.address,
+            city: orderData.city,
+            state: '',
+            zipCode: '',
+            phone: orderData.phone
+        },
+        paymentMethod: orderData.paymentMethod === 'cod' ? 'cash_on_delivery' : 'bank_transfer',
         paymentStatus: 'pending',
-        shippingAddress,
-        paymentMethod,
         createdAt: new Date().toISOString()
     };
-
-    saveOrder(order);
+    saveOrder(orderData, items, total, order.userId);
     return order;
 };
 
 // Cập nhật trạng thái đơn hàng
 export const updateOrderStatus = (userId: string, orderId: string, status: Order['status']): Order | null => {
-    const orders = getOrders(userId);
+    const orders = getOrders();
     const orderIndex = orders.findIndex(order => order.id === orderId);
 
     if (orderIndex >= 0) {
         orders[orderIndex].status = status;
-        localStorage.setItem(`orders_${userId}`, JSON.stringify(orders));
+        localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders));
         return orders[orderIndex];
     }
 
@@ -110,13 +123,13 @@ const generateOrderId = (): string => {
 
 // Lấy danh sách đơn hàng từ localStorage
 const getOrdersFromStorage = (): Order[] => {
-    const orders = localStorage.getItem('orders');
+    const orders = localStorage.getItem(ORDER_STORAGE_KEY);
     return orders ? JSON.parse(orders) : [];
 };
 
 // Lưu danh sách đơn hàng vào localStorage
 const saveOrdersToStorage = (orders: Order[]) => {
-    localStorage.setItem('orders', JSON.stringify(orders));
+    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders));
 };
 
 // Tạo đơn hàng mới
@@ -137,14 +150,8 @@ export const createOrderAsync = async (order: Omit<Order, 'id' | 'createdAt' | '
 
 // Lấy danh sách đơn hàng của người dùng
 export const getOrdersAsync = async (userId: string): Promise<Order[]> => {
-    const orders = getOrdersFromStorage();
+    const orders = getOrdersFromStorage() as unknown as Order[];
     return orders.filter(order => order.userId === userId);
-};
-
-// Lấy chi tiết đơn hàng
-export const getOrderById = async (orderId: string): Promise<Order | null> => {
-    const orders = getOrdersFromStorage();
-    return orders.find(order => order.id === orderId) || null;
 };
 
 // Cập nhật trạng thái đơn hàng
@@ -161,4 +168,17 @@ export const updateOrderStatusAsync = async (orderId: string, status: Order['sta
 
     saveOrdersToStorage(orders);
     return orders[orderIndex];
+};
+
+export const confirmOrderDelivery = (orderId: string): Order | null => {
+    const orders = getOrders();
+    const orderIndex = orders.findIndex(order => order.id === orderId);
+
+    if (orderIndex >= 0) {
+        orders[orderIndex].status = 'delivered';
+        localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders));
+        return orders[orderIndex];
+    }
+
+    return null;
 }; 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { formatPrice } from '../../utils/format';
 import { CartItem } from '../../types';
+import { saveOrder } from '../../services/orderService';
 
 interface CheckoutProps {
     cartItems: CartItem[];
@@ -45,7 +46,9 @@ export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total, onPlaceOrd
 
         try {
             await onPlaceOrder(formData);
-            navigate('/order-success');
+            // Lưu đơn hàng vào localStorage
+            const order = saveOrder(formData, cartItems, total);
+            navigate('/order-success', { state: { orderId: order.id } });
         } catch (error) {
             console.error('Error placing order:', error);
         } finally {
