@@ -16,28 +16,28 @@ export const SavedCards: React.FC<SavedCardsProps> = ({ onSelectCard, onAddNewCa
 
     useEffect(() => {
         if (user) {
-            const userCards = getSavedCards(user.id);
+            const userCards = getSavedCards(user._id);
             setCards(userCards);
 
             // Select the default card if available
             const defaultCard = userCards.find(card => card.isDefault);
             if (defaultCard) {
-                setSelectedCardId(defaultCard.id);
+                setSelectedCardId(defaultCard._id);
                 onSelectCard(defaultCard);
             }
         }
     }, [user, onSelectCard]);
 
     const handleSelectCard = (card: SavedCard) => {
-        setSelectedCardId(card.id);
+        setSelectedCardId(card._id);
         onSelectCard(card);
     };
 
     const handleSetDefault = (cardId: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (user) {
-            setDefaultCard(user.id, cardId);
-            setCards(getSavedCards(user.id));
+            setDefaultCard(user._id, cardId);
+            setCards(getSavedCards(user._id));
             toast.success('Thẻ mặc định đã được cập nhật');
         }
     };
@@ -45,14 +45,14 @@ export const SavedCards: React.FC<SavedCardsProps> = ({ onSelectCard, onAddNewCa
     const handleDeleteCard = (cardId: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (user) {
-            deleteCard(user.id, cardId);
-            setCards(getSavedCards(user.id));
+            deleteCard(user._id, cardId);
+            setCards(getSavedCards(user._id));
 
             // If we deleted the selected card, select another one if available
             if (cardId === selectedCardId && cards.length > 0) {
-                const newDefaultCard = cards.find(card => card.id !== cardId);
+                const newDefaultCard = cards.find(card => card._id !== cardId);
                 if (newDefaultCard) {
-                    setSelectedCardId(newDefaultCard.id);
+                    setSelectedCardId(newDefaultCard._id);
                     onSelectCard(newDefaultCard);
                 } else {
                     setSelectedCardId(null);
@@ -92,8 +92,8 @@ export const SavedCards: React.FC<SavedCardsProps> = ({ onSelectCard, onAddNewCa
                 <div className="space-y-3">
                     {cards.map(card => (
                         <div
-                            key={card.id}
-                            className={`p-4 border rounded-md cursor-pointer transition-colors ${selectedCardId === card.id
+                            key={card._id}
+                            className={`p-4 border rounded-md cursor-pointer transition-colors ${selectedCardId === card._id
                                 ? 'border-blue-500 bg-blue-50'
                                 : 'border-gray-200 hover:border-gray-300'
                                 }`}
@@ -119,7 +119,7 @@ export const SavedCards: React.FC<SavedCardsProps> = ({ onSelectCard, onAddNewCa
                                     )}
                                     {!card.isDefault && (
                                         <button
-                                            onClick={(e) => handleSetDefault(card.id, e)}
+                                            onClick={(e) => handleSetDefault(card._id, e)}
                                             className="p-1 text-gray-400 hover:text-yellow-500"
                                             title="Đặt làm mặc định"
                                         >
@@ -127,7 +127,7 @@ export const SavedCards: React.FC<SavedCardsProps> = ({ onSelectCard, onAddNewCa
                                         </button>
                                     )}
                                     <button
-                                        onClick={(e) => handleDeleteCard(card.id, e)}
+                                        onClick={(e) => handleDeleteCard(card._id, e)}
                                         className="p-1 text-gray-400 hover:text-red-500"
                                         title="Xóa thẻ"
                                     >

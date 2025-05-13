@@ -22,7 +22,7 @@ export const OrderSuccess: React.FC = () => {
                 <div className="space-y-4">
                     {orderId && (
                         <Link
-                            to={`/profile/orders/${orderId}`}
+                            to={`/orders/${orderId}`}
                             className="inline-block bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors"
                         >
                             Xem chi tiết đơn hàng

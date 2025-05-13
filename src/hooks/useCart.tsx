@@ -4,94 +4,65 @@ import { CartItem } from '../types';
 import * as cartService from '../services/cartService';
 import { toast } from 'react-hot-toast';
 
-export const useCart = () => {
+export function useCart() {
     const { user } = useAuth();
     const [cart, setCart] = useState<CartItem[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // Load giỏ hàng khi user thay đổi
+    const fetchCart = async () => {
+        if (!user?._id) return;
+        try {
+            setLoading(true);
+            const cart = await cartService.getCart(user._id);
+            setCart(cart.items || []);
+        } catch (error) {
+            console.error('Error fetching cart:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        if (user) {
-            const userCart = cartService.getCart(user.id);
-            setCart(userCart);
-        } else {
+        fetchCart();
+    }, [user?._id]);
+
+    const add = async (item: CartItem) => {
+        if (!user?._id) return;
+        try {
+            await cartService.addToCart(user._id, item);
+            await fetchCart();
+        } catch (error) {
+            console.error('Error adding item to cart:', error);
+        }
+    };
+
+    const updateQuantity = async (productId: string, quantity: number) => {
+        if (!user?._id) return;
+        try {
+            await cartService.updateCartItemQuantity(user._id, productId, quantity);
+            await fetchCart();
+        } catch (error) {
+            console.error('Error updating cart item:', error);
+        }
+    };
+
+    const remove = async (productId: string) => {
+        if (!user?._id) return;
+        try {
+            await cartService.removeFromCart(user._id, productId);
+            await fetchCart();
+        } catch (error) {
+            console.error('Error removing item from cart:', error);
+        }
+    };
+
+    const clear = async () => {
+        if (!user?._id) return;
+        try {
+            await cartService.clearCart(user._id);
             setCart([]);
-        }
-    }, [user]);
-
-    // Thêm sản phẩm vào giỏ hàng
-    const addToCart = (product: any, quantity: number = 1) => {
-        if (!user) {
-            toast.error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            const cartItem: CartItem = {
-                id: Date.now(), // Generate a unique ID
-                productId: product.id,
-                name: product.name,
-                brand: product.brand,
-                price: product.price,
-                image: product.image,
-                quantity
-            };
-
-            const updatedCart = cartService.addToCart(user.id, cartItem);
-            setCart(updatedCart);
-            toast.success('Đã thêm sản phẩm vào giỏ hàng');
         } catch (error) {
-            toast.error('Không thể thêm sản phẩm vào giỏ hàng');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Cập nhật số lượng sản phẩm
-    const updateQuantity = (productId: number, quantity: number) => {
-        if (!user) return;
-
-        setIsLoading(true);
-        try {
-            const updatedCart = cartService.updateCartItemQuantity(user.id, productId, quantity);
-            setCart(updatedCart);
-        } catch (error) {
-            toast.error('Không thể cập nhật số lượng sản phẩm');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Xóa sản phẩm khỏi giỏ hàng
-    const removeFromCart = (productId: number) => {
-        if (!user) return;
-
-        setIsLoading(true);
-        try {
-            const updatedCart = cartService.removeFromCart(user.id, productId);
-            setCart(updatedCart);
-            toast.success('Đã xóa sản phẩm khỏi giỏ hàng');
-        } catch (error) {
-            toast.error('Không thể xóa sản phẩm khỏi giỏ hàng');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Xóa toàn bộ giỏ hàng
-    const clearCart = () => {
-        if (!user) return;
-
-        setIsLoading(true);
-        try {
-            cartService.clearCart(user.id);
-            setCart([]);
-            toast.success('Đã xóa toàn bộ giỏ hàng');
-        } catch (error) {
-            toast.error('Không thể xóa giỏ hàng');
-        } finally {
-            setIsLoading(false);
+            console.error('Error clearing cart:', error);
         }
     };
 
@@ -105,14 +76,5 @@ export const useCart = () => {
         return cart.length === 0;
     };
 
-    return {
-        cart,
-        isLoading,
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        clearCart,
-        getTotal,
-        isEmpty
-    };
-}; 
+    return { cart, loading, add, updateQuantity, remove, clear, getTotal, isEmpty };
+} 

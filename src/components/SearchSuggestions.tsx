@@ -33,8 +33,8 @@ export const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
         <div className="absolute top-full left-0 w-full bg-white rounded-lg shadow-lg border border-gray-200 mt-1 z-50 max-h-96 overflow-y-auto">
             {suggestions.map((product) => (
                 <Link
-                    key={product.id}
-                    to={`/product/${product.id}`}
+                    key={product._id}
+                    to={`/product/${product._id}`}
                     onClick={() => onSelect(product)}
                     className="flex items-center p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
                 >

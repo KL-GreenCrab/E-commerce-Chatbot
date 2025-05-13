@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -14,12 +14,12 @@ import { UserProfile } from './components/User/UserProfile';
 import Footer from './components/Footer';
 import { Checkout } from './components/Checkout/Checkout';
 import { OrderSuccess } from './components/Checkout/OrderSuccess';
-import { OrderList } from './components/Order/OrderList';
-import { OrderDetail } from './components/Order/OrderDetail';
-
+import { OrderList } from './components/Orders/OrderList';
+import CartPage from './components/Cart/CartPage';
+import OrderDetailPage from './pages/OrderDetailPage';
 import { AuthProvider } from './hooks/useAuth';
-import { products } from './data/products';
 import { CartItem, Product, OrderData } from './types';
+import { fetchProducts } from './services/productService';
 
 // Wrapper component to handle page transitions
 function PageTransition({ children }: { children: React.ReactNode }) {
@@ -34,7 +34,6 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 
 function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    // Load cart items from localStorage if available
     const savedCart = localStorage.getItem('cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
@@ -43,25 +42,33 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selectedPriceRange, setSelectedPriceRange] = useState<{ min: number; max: number } | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Save cart items to localStorage whenever they change
+  useEffect(() => {
+    setIsLoading(true);
+    fetchProducts()
+      .then(setProducts)
+      .finally(() => setIsLoading(false));
+  }, []);
+
   React.useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
   const handleAddToCart = (product: Product) => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.productId === product.id.toString());
+      const existingItem = prevItems.find(item => item.productId === product._id);
       if (existingItem) {
         return prevItems.map(item =>
-          item.productId === product.id.toString()
+          item.productId === product._id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
       return [...prevItems, {
         id: Date.now(),
-        productId: product.id.toString(),
+        productId: product._id,
         name: product.name,
         brand: product.brand,
         price: product.price,
@@ -91,7 +98,6 @@ function App() {
   const handleRemoveItem = (productId: string) => {
     setCartItems(prevItems => {
       const updatedItems = prevItems.filter(item => item.productId !== productId);
-      // Save to localStorage
       localStorage.setItem('cart', JSON.stringify(updatedItems));
       return updatedItems;
     });
@@ -103,7 +109,6 @@ function App() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // Add your search logic here
   };
 
   const handleCategorySelect = (categoryId: string) => {
@@ -152,18 +157,8 @@ function App() {
 
   const handlePlaceOrder = async (orderData: OrderData) => {
     try {
-      // TODO: Gọi API để tạo đơn hàng
-      // const order = await createOrder({
-      //     ...orderData,
-      //     items: cartItems,
-      //     total: getTotal(),
-      //     userId: user?.id
-      // });
-
-      // Xóa giỏ hàng sau khi đặt hàng thành công
       setCartItems([]);
       localStorage.removeItem('cart');
-
       toast.success('Đặt hàng thành công!');
     } catch (error) {
       console.error('Error placing order:', error);
@@ -202,6 +197,7 @@ function App() {
           />
 
           <Header
+            products={products}
             cartItems={cartItems}
             onCartClick={() => setIsCartOpen(true)}
             onSearch={handleSearch}
@@ -227,7 +223,7 @@ function App() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {getSearchResults().map(product => (
                           <ProductCard
-                            key={product.id}
+                            key={product._id}
                             product={product}
                             onAddToCart={handleAddToCart}
                           />
@@ -255,9 +251,9 @@ function App() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {products.map(product => (
+                          {filteredProducts.map(product => (
                             <ProductCard
-                              key={product.id}
+                              key={product._id}
                               product={product}
                               onAddToCart={handleAddToCart}
                             />
@@ -268,8 +264,9 @@ function App() {
                   </>
                 } />
                 <Route path="/profile/orders" element={<OrderList />} />
-                <Route path="/profile/orders/:orderId" element={<OrderDetail />} />
+                <Route path="/orders/:id" element={<OrderDetailPage />} />
                 <Route path="/profile" element={<UserProfile />} />
+                <Route path="/cart/:userId" element={<CartPage />} />
               </Routes>
             </PageTransition>
           </main>
@@ -279,9 +276,6 @@ function App() {
           <Cart
             isOpen={isCartOpen}
             onClose={() => setIsCartOpen(false)}
-            items={cartItems}
-            onUpdateQuantity={handleUpdateQuantity}
-            onRemoveItem={handleRemoveItem}
           />
         </div>
       </Router>

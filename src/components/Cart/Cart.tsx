@@ -1,165 +1,149 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, X } from 'lucide-react';
 import { formatPrice } from '../../utils/format';
-import { CartItem } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+import { useCart } from '../../hooks/useCart';
+import { Checkout } from '../Checkout/Checkout';
+import { useState } from 'react';
 
 interface CartProps {
     isOpen: boolean;
     onClose: () => void;
-    items: CartItem[];
-    onUpdateQuantity: (id: number, quantity: number) => void;
-    onRemoveItem: (productId: string) => void;
 }
 
-export const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem }) => {
+export const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
+    const { cart, loading, updateQuantity, remove, getTotal } = useCart();
+    const navigate = useNavigate();
+    const [showCheckout, setShowCheckout] = useState(false);
 
     if (!isOpen) return null;
 
-    const getTotal = () => {
-        return items.reduce((total, item) => total + (item.price * item.quantity), 0);
-    };
+    const isEmpty = cart.length === 0;
 
-    const isEmpty = items.length === 0;
-
-    const handleUpdateQuantity = (id: string, quantity: number) => {
+    const handleUpdateQuantity = (productId: string, quantity: number) => {
         if (quantity === 0) {
-            onRemoveItem(id);
+            remove(productId);
             return;
         }
-        onUpdateQuantity(parseInt(id), quantity);
+        updateQuantity(productId, quantity);
     };
 
     const handleRemoveItem = (productId: string) => {
-        onRemoveItem(productId);
+        remove(productId);
     };
 
     return (
-        <div className="fixed inset-0 bg-gray-100 z-50 overflow-y-auto">
-            <div className="container mx-auto px-4 py-8">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold">Giỏ hàng của bạn</h1>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-gray-200 rounded-full"
-                    >
-                        <X className="h-6 w-6" />
-                    </button>
-                </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+            <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
+                <div className="flex flex-col h-full">
+                    <div className="flex items-center justify-between p-4 border-b">
+                        <h2 className="text-lg font-semibold">Giỏ hàng</h2>
+                        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+                            <X className="h-5 w-5" />
+                        </button>
+                    </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Danh sách sản phẩm */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                            {isEmpty ? (
-                                <div className="p-8 text-center">
-                                    <ShoppingBag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Giỏ hàng trống</h3>
-                                    <p className="text-gray-500 mb-4">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
-                                    <Link
-                                        to="/"
-                                        className="text-red-600 hover:text-red-700 font-medium"
-                                    >
-                                        Tiếp tục mua sắm
-                                    </Link>
-                                </div>
-                            ) : (
-                                <div className="divide-y">
-                                    {items.map(item => (
-                                        <div key={item.productId} className="p-4 flex items-center gap-4">
-                                            <img
-                                                src={item.image}
-                                                alt={item.name}
-                                                className="w-20 h-20 object-cover rounded-md"
-                                            />
-
-                                            <div className="flex-1">
-                                                <h3 className="font-semibold">{item.name}</h3>
-                                                <p className="text-gray-600">{formatPrice(item.price)}</p>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
+                    <div className="flex-1 overflow-y-auto p-4">
+                        {loading ? (
+                            <div className="flex justify-center items-center h-32">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                            </div>
+                        ) : isEmpty ? (
+                            <div className="text-center py-8">
+                                <ShoppingBag className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                                <p className="text-gray-500">Giỏ hàng trống</p>
+                                <Link
+                                    to="/"
+                                    className="mt-4 inline-block bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                                    onClick={onClose}
+                                >
+                                    Tiếp tục mua sắm
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {cart.map(item => (
+                                    <div key={item.productId} className="p-4 flex items-center gap-4">
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
+                                            className="w-20 h-20 object-cover rounded"
+                                        />
+                                        <div className="flex-1">
+                                            <h3 className="font-medium">{item.name}</h3>
+                                            <p className="text-sm text-gray-500">
+                                                {formatPrice(item.price)}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-2">
                                                 <button
                                                     onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
                                                     className="p-1 rounded-full hover:bg-gray-100"
                                                 >
-                                                    <Minus className="w-4 h-4" />
+                                                    <Minus className="h-4 w-4" />
                                                 </button>
-
                                                 <span className="w-8 text-center">{item.quantity}</span>
-
                                                 <button
                                                     onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
                                                     className="p-1 rounded-full hover:bg-gray-100"
                                                 >
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
-                                            </div>
-
-                                            <div className="flex flex-col items-end">
-                                                <p className="font-semibold">
-                                                    {formatPrice(item.price * item.quantity)}
-                                                </p>
-                                                <button
-                                                    onClick={() => handleRemoveItem(item.productId)}
-                                                    className="text-red-500 hover:text-red-600 mt-2 flex items-center gap-1"
-                                                    title="Xóa sản phẩm"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                    <span className="text-sm">Xóa</span>
+                                                    <Plus className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <p className="font-semibold">
+                                                {formatPrice(item.price * item.quantity)}
+                                            </p>
+                                            <button
+                                                onClick={() => handleRemoveItem(item.productId)}
+                                                className="text-red-500 hover:text-red-600 mt-2 flex items-center gap-1"
+                                                title="Xóa sản phẩm"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                <span className="text-sm">Xóa</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Tổng tiền và thanh toán */}
                     {!isEmpty && (
-                        <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg shadow-md p-6">
-                                <h2 className="text-lg font-semibold mb-4">Tổng đơn hàng</h2>
-                                <div className="space-y-2 mb-4">
-                                    <div className="flex justify-between">
-                                        <span>Tạm tính:</span>
-                                        <span>{formatPrice(getTotal())}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Phí vận chuyển:</span>
-                                        <span>Miễn phí</span>
-                                    </div>
-                                    <div className="border-t pt-2">
-                                        <div className="flex justify-between font-semibold">
-                                            <span>Tổng cộng:</span>
-                                            <span>{formatPrice(getTotal())}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                {user ? (
-                                    <Link
-                                        to="/checkout"
-                                        onClick={() => onClose()}
-                                        className="block w-full bg-red-600 text-white py-3 px-4 rounded-lg text-center hover:bg-red-700 transition-colors"
-                                    >
-                                        Thanh toán
-                                    </Link>
-                                ) : (
-                                    <Link
-                                        to="/login"
-                                        onClick={() => onClose()}
-                                        className="block w-full bg-red-600 text-white py-3 px-4 rounded-lg text-center hover:bg-red-700 transition-colors"
-                                    >
-                                        Đăng nhập để thanh toán
-                                    </Link>
-                                )}
+                        <div className="border-t p-4">
+                            <div className="flex justify-between mb-4">
+                                <span className="font-medium">Tổng cộng:</span>
+                                <span className="font-semibold">{formatPrice(getTotal())}</span>
                             </div>
+                            <button
+                                onClick={() => setShowCheckout(true)}
+                                className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700"
+                            >
+                                Thanh toán
+                            </button>
                         </div>
                     )}
                 </div>
+
+                {showCheckout && (
+                    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg shadow-lg p-8 max-w-lg w-full relative">
+                            <button
+                                onClick={() => setShowCheckout(false)}
+                                className="absolute top-2 right-2 p-2 bg-gray-200 rounded-full hover:bg-gray-300"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                            <Checkout
+                                cartItems={cart}
+                                total={getTotal()}
+                                onPlaceOrder={async () => { setShowCheckout(false); }}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

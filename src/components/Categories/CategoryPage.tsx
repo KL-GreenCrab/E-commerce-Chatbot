@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { categories, products } from '../../data/products';
+import { categories } from '../../data/products';
 import ProductCard from '../ProductCard';
 import { Product, Category } from '../../types';
+import { fetchProducts } from '../../services/productService';
 
 interface CategoryPageProps {
     onAddToCart: (product: Product) => void;
@@ -11,11 +12,18 @@ interface CategoryPageProps {
 export default function CategoryPage({ onAddToCart }: CategoryPageProps) {
     const { categoryId } = useParams<{ categoryId: string }>();
     const navigate = useNavigate();
+    const [products, setProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     const category = categories.find(c => c.id === categoryId);
-    const categoryProducts = products.filter(p =>
-        p.category.toLowerCase() === (category?.name.toLowerCase() || '')
-    );
+
+    useEffect(() => {
+        if (!category) return;
+        setIsLoading(true);
+        fetchProducts({ category: category?.name })
+            .then(setProducts)
+            .finally(() => setIsLoading(false));
+    }, [category]);
 
     if (!category) {
         return (
@@ -51,17 +59,21 @@ export default function CategoryPage({ onAddToCart }: CategoryPageProps) {
             </div>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {categoryProducts.map(product => (
-                        <ProductCard
-                            key={product.id}
-                            product={product}
-                            onAddToCart={onAddToCart}
-                        />
-                    ))}
-                </div>
+                {isLoading ? (
+                    <div className="text-center py-12">Đang tải sản phẩm...</div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {products.map(product => (
+                            <ProductCard
+                                key={product._id}
+                                product={product}
+                                onAddToCart={onAddToCart}
+                            />
+                        ))}
+                    </div>
+                )}
 
-                {categoryProducts.length === 0 && (
+                {!isLoading && products.length === 0 && (
                     <div className="text-center py-12">
                         <p className="text-gray-600">Không tìm thấy sản phẩm nào trong danh mục này.</p>
                     </div>

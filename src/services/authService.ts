@@ -23,51 +23,27 @@ const isEmailExists = (email: string): boolean => {
     return users.some(user => user.email === email);
 };
 
-// Đăng ký người dùng mới
-export const register = async (name: string, email: string, password: string): Promise<User> => {
-    // Kiểm tra email đã tồn tại chưa
-    if (isEmailExists(email)) {
-        throw new Error('Email already exists');
-    }
+const API_URL = 'http://localhost:5000/api/auth';
 
-    // Tạo người dùng mới
-    const newUser: User = {
-        id: Date.now().toString(),
-        name,
-        email,
-        password, // Trong ứng dụng thực tế, mật khẩu sẽ được mã hóa
-    };
+export async function register(data: { email: string; password: string; name: string; phone: string; address: string }) {
+    const res = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+}
 
-    // Lưu người dùng mới vào danh sách
-    const users = getRegisteredUsers();
-    users.push(newUser);
-    saveRegisteredUsers(users);
-
-    // Trả về thông tin người dùng (không bao gồm mật khẩu)
-    const { password: _, ...userWithoutPassword } = newUser;
-    return userWithoutPassword;
-};
-
-// Đăng nhập
-export const login = async (email: string, password: string): Promise<AuthState> => {
-    // Kiểm tra thông tin đăng nhập
-    const users = getRegisteredUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-
-    if (!user) {
-        throw new Error('Invalid email or password');
-    }
-
-    // Tạo token (trong ứng dụng thực tế, token sẽ được tạo bởi backend)
-    const token = `token-${Date.now()}`;
-
-    // Trả về thông tin người dùng và token (không bao gồm mật khẩu)
-    const { password: _, ...userWithoutPassword } = user;
-    return {
-        user: userWithoutPassword,
-        token,
-    };
-};
+export async function login(data: { email: string; password: string }) {
+    const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+}
 
 // Đăng xuất
 export const logout = (): void => {

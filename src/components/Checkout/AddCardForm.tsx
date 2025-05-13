@@ -50,7 +50,7 @@ export const AddCardForm: React.FC<AddCardFormProps> = ({ onCancel, onSuccess })
         setIsSubmitting(true);
 
         try {
-            saveCard(user.id, formData);
+            saveCard(user._id, formData);
             toast.success('Thẻ đã được lưu thành công');
             onSuccess();
         } catch (error) {

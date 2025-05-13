@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu, ChevronDown, LogOut, X, Filter } from 'lucide-react';
-import { CartItem } from '../types';
-import { categories, products } from '../data/products';
+import { CartItem, Product } from '../types';
+import { categories } from '../data/products';
 import { SearchBar } from './SearchBar';
 import { useAuth } from '../hooks/useAuth';
 
 interface HeaderProps {
+  products: Product[];
   cartItems: CartItem[];
   onCartClick: () => void;
   onSearch?: (query: string) => void;
@@ -22,9 +23,8 @@ const priceRanges = [
   { label: 'Over $2000', min: 2000, max: Infinity }
 ];
 
-const brands = Array.from(new Set(products.map(product => product.brand)));
-
 export default function Header({
+  products,
   cartItems,
   onCartClick,
   onSearch,
@@ -42,8 +42,9 @@ export default function Header({
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const minPrice = useMemo(() => Math.min(...products.map(p => p.price)), []);
-  const maxPrice = useMemo(() => Math.max(...products.map(p => p.price)), []);
+  const brands = useMemo(() => Array.from(new Set(products.map(product => product.brand))), [products]);
+  const minPrice = useMemo(() => products.length ? Math.min(...products.map(p => p.price)) : 0, [products]);
+  const maxPrice = useMemo(() => products.length ? Math.max(...products.map(p => p.price)) : 0, [products]);
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -124,7 +125,7 @@ export default function Header({
                   <div className="px-4 py-2 border-b">
                     <h3 className="font-semibold text-gray-900">All Categories</h3>
                   </div>
-                  {categories.map(category => (
+                  {categories.map((category: import("../types").Category) => (
                     <button
                       key={category.id}
                       onClick={() => handleCategorySelect(category.id)}
@@ -227,14 +228,20 @@ export default function Header({
             <SearchBar
               onSearch={handleSearch}
               onSelect={(product) => {
-                navigate(`/product/${product.id}`);
+                navigate(`/product/${product._id}`);
               }}
             />
           </div>
 
           <div className="flex items-center space-x-4">
             <button
-              onClick={onCartClick}
+              onClick={() => {
+                if (user && user._id) {
+                  navigate(`/cart/${user._id}`);
+                } else {
+                  navigate('/login');
+                }
+              }}
               className="relative p-2 text-gray-700 hover:text-red-600"
             >
               <ShoppingCart className="h-6 w-6" />

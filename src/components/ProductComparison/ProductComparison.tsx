@@ -43,7 +43,7 @@ export const ProductComparison: React.FC<ProductComparisonProps> = ({ products, 
                         <div className="font-semibold text-gray-900 text-lg">Sản phẩm</div>
                         {products.map((product, index) => (
                             <div
-                                key={product.id}
+                                key={product._id}
                                 className={`relative ${index !== products.length - 1 ? 'border-r border-gray-200' : ''}`}
                             >
                                 <div className="flex flex-col items-center">
@@ -98,7 +98,7 @@ export const ProductComparison: React.FC<ProductComparisonProps> = ({ products, 
                         <div className="grid grid-cols-4 gap-6 p-6 bg-gray-50">
                             <div className="font-semibold text-gray-900">Thông số cơ bản</div>
                             {products.map(product => (
-                                <div key={product.id} className="text-gray-600 space-y-2">
+                                <div key={product._id} className="text-gray-600 space-y-2">
                                     <div className="flex items-center h-8">
                                         <span className="font-medium text-gray-700 mr-2">Thương hiệu:</span>
                                         <span>{product.brand}</span>
@@ -126,7 +126,7 @@ export const ProductComparison: React.FC<ProductComparisonProps> = ({ products, 
                             >
                                 <div className="font-semibold text-gray-900">{spec}</div>
                                 {products.map(product => (
-                                    <div key={product.id} className="text-gray-600 flex items-center h-8">
+                                    <div key={product._id} className="text-gray-600 flex items-center h-8">
                                         {product.specifications?.[spec] || '-'}
                                     </div>
                                 ))}
@@ -137,7 +137,7 @@ export const ProductComparison: React.FC<ProductComparisonProps> = ({ products, 
                         <div className="grid grid-cols-4 gap-6 p-6 bg-white">
                             <div className="font-semibold text-gray-900">Mô tả sản phẩm</div>
                             {products.map(product => (
-                                <div key={product.id} className="text-gray-600">
+                                <div key={product._id} className="text-gray-600">
                                     <div className="min-h-[100px] p-4 bg-gray-50 rounded-lg">
                                         <p className="text-sm leading-relaxed">
                                             {product.description || '-'}

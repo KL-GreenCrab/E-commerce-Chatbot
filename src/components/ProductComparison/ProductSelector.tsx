@@ -21,7 +21,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
     onClose
 }) => {
     const similarProducts = products.filter(p =>
-        p.id !== currentProduct.id &&
+        p._id !== currentProduct._id &&
         p.category === currentProduct.category
     );
 
@@ -40,11 +40,11 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {similarProducts.map(product => {
-                        const isSelected = selectedProducts.some(p => p.id === product.id);
+                        const isSelected = selectedProducts.some(p => p._id === product._id);
 
                         return (
                             <div
-                                key={product.id}
+                                key={product._id}
                                 className={`bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-all ${isSelected ? 'ring-2 ring-red-500' : 'hover:shadow-lg'
                                     }`}
                                 onClick={() => isSelected ? onDeselect(product) : onSelect(product)}

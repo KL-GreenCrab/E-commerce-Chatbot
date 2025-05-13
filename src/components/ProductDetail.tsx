@@ -4,9 +4,11 @@ import { Star, ShoppingCart, Heart, ArrowLeft, Scale } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Product } from '../types';
 import { formatPrice } from '../utils/format';
-import { products } from '../data/products';
+import { fetchProductById } from '../services/productService';
 import { ProductComparison } from './ProductComparison/ProductComparison';
 import { ProductSelector } from './ProductComparison/ProductSelector';
+import { useAuth } from '../hooks/useAuth';
+import { useCart } from '../hooks/useCart';
 
 interface ProductDetailProps {
   onAddToCart: (product: Product) => void;
@@ -15,21 +17,22 @@ interface ProductDetailProps {
 export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { add } = useCart();
   const [selectedImage, setSelectedImage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
   const [comparisonProducts, setComparisonProducts] = useState<Product[]>([]);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [product, setProduct] = useState<Product | null>(null);
 
-  const product = products.find(p => p.id === Number(id));
-
-  // Simulate loading effect
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    setIsLoading(true);
+    fetchProductById(id!)
+      .then(setProduct)
+      .catch(() => setProduct(null))
+      .finally(() => setIsLoading(false));
   }, [id]);
 
   const handleAddToComparison = () => {
@@ -42,7 +45,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
   };
 
   const handleDeselectProduct = (deselectedProduct: Product) => {
-    setSelectedProducts(prev => prev.filter(p => p.id !== deselectedProduct.id));
+    setSelectedProducts(prev => prev.filter(p => p._id !== deselectedProduct._id));
   };
 
   const handleCloseSelector = () => {
@@ -81,13 +84,27 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
     );
   }
 
-  const handleAddToCart = () => {
-    onAddToCart(product);
-    toast.success(`${product.name} added to cart!`, {
-      icon: '🛒',
-      duration: 2000,
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!user || !user._id) {
+      toast.error('Please login to add items to cart');
+      navigate('/login');
+      return;
+    }
+
+    add({
+      id: Date.now(),
+      productId: product._id,
+      name: product.name,
+      brand: product.brand,
+      price: product.price,
+      image: product.image,
+      quantity: 1
     });
+    toast.success(`${product.name} added to cart`);
   };
+
 
   return (
     <>
@@ -182,7 +199,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
 
             <div className="flex space-x-4">
               <button
-                onClick={handleAddToCart}
+                onClick={handleAddToCartClick}
                 className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-red-700 transition-colors"
               >
                 <ShoppingCart className="h-5 w-5" />
@@ -215,7 +232,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
 
       {isSelectorOpen && product && (
         <ProductSelector
-          products={products}
+          products={[]}
           selectedProducts={selectedProducts}
           currentProduct={product}
           onSelect={handleSelectProduct}

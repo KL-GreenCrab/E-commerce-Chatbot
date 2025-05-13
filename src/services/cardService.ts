@@ -1,7 +1,7 @@
 import { User } from '../types';
 
 export interface SavedCard {
-    id: string;
+    _id: string;
     userId: string;
     cardNumber: string;
     cardName: string;
@@ -16,14 +16,14 @@ export const getSavedCards = (userId: string): SavedCard[] => {
 };
 
 // Save a new card
-export const saveCard = (userId: string, cardData: Omit<SavedCard, 'id' | 'userId'>): SavedCard => {
+export const saveCard = (userId: string, cardData: Omit<SavedCard, '_id' | 'userId'>): SavedCard => {
     const cards = getSavedCards(userId);
 
     // Generate a unique ID
-    const id = Date.now().toString();
+    const _id = Date.now().toString();
 
     const newCard: SavedCard = {
-        id,
+        _id,
         userId,
         ...cardData
     };
@@ -45,7 +45,7 @@ export const setDefaultCard = (userId: string, cardId: string): void => {
 
     const updatedCards = cards.map(card => ({
         ...card,
-        isDefault: card.id === cardId
+        isDefault: card._id === cardId
     }));
 
     localStorage.setItem(`cards_${userId}`, JSON.stringify(updatedCards));
@@ -54,10 +54,10 @@ export const setDefaultCard = (userId: string, cardId: string): void => {
 // Delete a saved card
 export const deleteCard = (userId: string, cardId: string): void => {
     const cards = getSavedCards(userId);
-    const filteredCards = cards.filter(card => card.id !== cardId);
+    const filteredCards = cards.filter(card => card._id !== cardId);
 
     // If we deleted the default card and there are other cards, make the first one default
-    if (cards.find(card => card.id === cardId)?.isDefault && filteredCards.length > 0) {
+    if (cards.find(card => card._id === cardId)?.isDefault && filteredCards.length > 0) {
         filteredCards[0].isDefault = true;
     }
 

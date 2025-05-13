@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { SearchSuggestions } from './SearchSuggestions';
 import { Product } from '../types';
-import { products } from '../data/products';
+import { fetchProducts } from '../services/productService';
 
 interface SearchBarProps {
   onSearch?: (query: string) => void;
@@ -30,17 +30,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onSelect }) => {
   useEffect(() => {
     if (query.trim()) {
       setIsLoading(true);
-      // Simulate API call with setTimeout
-      const timer = setTimeout(() => {
-        const filteredProducts = products.filter(product =>
-          product.name.toLowerCase().includes(query.toLowerCase()) ||
-          product.brand.toLowerCase().includes(query.toLowerCase())
-        );
-        setSuggestions(filteredProducts.slice(0, 5));
-        setIsLoading(false);
-      }, 300);
-
-      return () => clearTimeout(timer);
+      fetchProducts({ search: query })
+        .then(data => setSuggestions(data.slice(0, 5)))
+        .finally(() => setIsLoading(false));
     } else {
       setSuggestions([]);
     }

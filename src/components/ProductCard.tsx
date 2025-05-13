@@ -5,6 +5,7 @@ import { Product } from '../types';
 import { formatPrice } from '../utils/format';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-hot-toast';
+import { useCart } from '../hooks/useCart';
 
 interface ProductCardProps {
   product: Product;
@@ -14,21 +15,30 @@ interface ProductCardProps {
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { add } = useCart();
 
   const handleProductClick = () => {
-    navigate(`/product/${product.id}`);
+    navigate(`/product/${product._id}`);
   };
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (!user) {
+    if (!user || !user._id) {
       toast.error('Please login to add items to cart');
       navigate('/login');
       return;
     }
 
-    onAddToCart(product);
+    add({
+      id: Date.now(),
+      productId: product._id,
+      name: product.name,
+      brand: product.brand,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
     toast.success(`${product.name} added to cart`);
   };
 

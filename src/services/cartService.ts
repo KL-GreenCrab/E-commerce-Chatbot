@@ -1,75 +1,62 @@
 import { CartItem } from '../types';
 
-// Lấy giỏ hàng của người dùng từ localStorage
-export const getCart = (userId: string): CartItem[] => {
-    const cart = localStorage.getItem(`cart_${userId}`);
-    return cart ? JSON.parse(cart) : [];
-};
-
-// Lưu giỏ hàng vào localStorage
-export const saveCart = (userId: string, cart: CartItem[]): void => {
-    localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
-};
+const API_URL = 'http://localhost:5000/api/cart';
 
 // Thêm sản phẩm vào giỏ hàng
-export const addToCart = (userId: string, item: CartItem): CartItem[] => {
-    const cart = getCart(userId);
-
-    // Kiểm tra xem sản phẩm đã tồn tại trong giỏ hàng chưa
-    const existingItemIndex = cart.findIndex(cartItem => cartItem.productId === item.productId);
-
-    if (existingItemIndex >= 0) {
-        // Nếu sản phẩm đã tồn tại, cập nhật số lượng
-        cart[existingItemIndex].quantity += item.quantity;
-    } else {
-        // Nếu sản phẩm chưa tồn tại, thêm mới
-        cart.push(item);
-    }
-
-    // Lưu giỏ hàng đã cập nhật
-    saveCart(userId, cart);
-    return cart;
+export const addToCart = async (userId: string, item: { productId: string, name: string, price: number, image: string, quantity: number }) => {
+    const res = await fetch(`${API_URL}/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
 };
 
 // Cập nhật số lượng sản phẩm trong giỏ hàng
-export const updateCartItemQuantity = (userId: string, productId: number, quantity: number): CartItem[] => {
-    const cart = getCart(userId);
-    const itemIndex = cart.findIndex(item => item.productId === productId);
-
-    if (itemIndex >= 0) {
-        if (quantity > 0) {
-            cart[itemIndex].quantity = quantity;
-        } else {
-            // Nếu số lượng <= 0, xóa sản phẩm khỏi giỏ hàng
-            cart.splice(itemIndex, 1);
-        }
-        saveCart(userId, cart);
-    }
-
-    return cart;
+export const updateCartItemQuantity = async (userId: string, productId: string, quantity: number) => {
+    // Gọi lại addToCart với quantity mới
+    return addToCart(userId, { productId, quantity, name: '', price: 0, image: '' });
 };
 
 // Xóa sản phẩm khỏi giỏ hàng
-export const removeFromCart = (userId: string, productId: number): CartItem[] => {
-    const cart = getCart(userId);
-    const updatedCart = cart.filter(item => item.productId !== productId);
-    saveCart(userId, updatedCart);
-    return updatedCart;
+export const removeFromCart = async (userId: string, productId: string) => {
+    const res = await fetch(`${API_URL}/${userId}/${productId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
 };
 
 // Xóa toàn bộ giỏ hàng
-export const clearCart = (userId: string): void => {
-    localStorage.removeItem(`cart_${userId}`);
+export const clearCart = async (userId: string) => {
+    const res = await fetch(`${API_URL}/${userId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
 };
 
-// Tính tổng giá trị giỏ hàng
-export const getCartTotal = (userId: string): number => {
-    const cart = getCart(userId);
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-};
+// Lấy giỏ hàng từ backend
+export async function fetchCart(userId: string) {
+    const res = await fetch(`${API_URL}/${userId}`);
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+}
 
-// Kiểm tra xem giỏ hàng có trống không
-export const isCartEmpty = (userId: string): boolean => {
-    const cart = getCart(userId);
-    return cart.length === 0;
+export const getCart = async (userId: string) => {
+    const auth = localStorage.getItem('auth');
+    if (!auth) {
+        throw new Error('Unauthorized: Please login first');
+    }
+    const { token } = JSON.parse(auth);
+    if (!token) {
+        throw new Error('Unauthorized: Please login first');
+    }
+
+    const response = await fetch(`${API_URL}/${userId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch cart');
+    }
+    return response.json();
 }; 

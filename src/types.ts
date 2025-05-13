@@ -1,5 +1,6 @@
 export interface Product {
-  id: number;
+  _id: string;
+  id?: number;
   name: string;
   brand: string;
   price: number;
@@ -25,11 +26,12 @@ export interface CartItem {
 }
 
 export interface User {
-  id: string;
+  _id: string;
   email: string;
   name: string;
   fullName: string;
   phone: string;
+  address: string;
   avatar?: string;
   password?: string;
 }
@@ -54,24 +56,23 @@ export interface Category {
 }
 
 export interface Order {
-  id: string;
+  _id: string;
   userId: string;
-  items: CartItem[];
+  items: OrderItem[];
   total: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: 'pending' | 'processing' | 'completed' | 'cancelled';
-  shippingAddress: {
-    fullName: string;
-    address: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    phone: string;
-  };
-  paymentMethod: 'credit_card' | 'bank_transfer' | 'cash_on_delivery';
+  status: string;
+  paymentMethod: string;
+  address: string;
+  phone: string;
   createdAt: string;
-  orderNumber?: string;
-  date?: string;
+}
+
+export interface OrderItem {
+  productId: string;
+  name: string;
+  image: string;
+  price: number;
+  quantity: number;
 }
 
 export interface OrderData {

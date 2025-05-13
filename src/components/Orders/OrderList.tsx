@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Order } from '../../types';
-import { getOrdersAsync } from '../../services/orderService';
+import { getOrdersByUser } from '../../services/orderService';
 import { formatCurrency } from '../../utils/format';
+import { Link } from 'react-router-dom';
 
 export const OrderList: React.FC = () => {
     const { user } = useAuth();
@@ -14,7 +15,7 @@ export const OrderList: React.FC = () => {
             if (!user) return;
 
             try {
-                const userOrders = await getOrdersAsync(user.id);
+                const userOrders = await getOrdersByUser(user._id);
                 setOrders(userOrders);
             } catch (error) {
                 console.error('Error fetching orders:', error);
@@ -45,10 +46,12 @@ export const OrderList: React.FC = () => {
     return (
         <div className="space-y-6">
             {orders.map((order) => (
-                <div key={order.id} className="bg-white rounded-lg shadow p-6">
+                <div key={order._id} className="bg-white rounded-lg shadow p-6">
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                            <h3 className="text-lg font-semibold">Đơn hàng #{order.id}</h3>
+                            <Link to={`/orders/${order._id}`} className="text-lg font-semibold hover:text-blue-600">
+                                Đơn hàng #{order._id}
+                            </Link>
                             <p className="text-sm text-gray-500">
                                 {new Date(order.createdAt).toLocaleDateString('vi-VN')}
                             </p>
@@ -97,7 +100,7 @@ export const OrderList: React.FC = () => {
                                     }
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                    Địa chỉ giao hàng: {order.shippingAddress.address}, {order.shippingAddress.city}
+                                    Địa chỉ giao hàng: {order.address || 'Chưa cập nhật'}
                                 </p>
                             </div>
                             <div className="text-right">
