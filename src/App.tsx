@@ -96,14 +96,30 @@ function App() {
     return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
   });
 
-  // Get search results based on query parameter
+  // Get search results based on URL parameters
   const getSearchResults = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q') || '';
-    return products.filter(product =>
-      product.name.toLowerCase().includes(query.toLowerCase()) ||
-      product.brand.toLowerCase().includes(query.toLowerCase())
-    );
+    const brand = urlParams.get('brand') || '';
+    const minPrice = urlParams.get('minPrice') ? Number(urlParams.get('minPrice')) : 0;
+    const maxPrice = urlParams.get('maxPrice') ? Number(urlParams.get('maxPrice')) : Infinity;
+
+    return products.filter(product => {
+      // Match search query
+      const matchesQuery = !query ||
+        product.name.toLowerCase().includes(query.toLowerCase()) ||
+        product.brand.toLowerCase().includes(query.toLowerCase()) ||
+        (product.description && product.description.toLowerCase().includes(query.toLowerCase()));
+
+      // Match brand filter
+      const matchesBrand = !brand || product.brand === brand;
+
+      // Match price range
+      const matchesPrice = product.price >= minPrice &&
+        (maxPrice === Infinity || product.price <= maxPrice);
+
+      return matchesQuery && matchesBrand && matchesPrice;
+    });
   };
 
   return (
@@ -155,14 +171,73 @@ function App() {
                   <Route path="/search" element={
                     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                       <section>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {getSearchResults().map(product => (
-                            <ProductCard
-                              key={product._id}
-                              product={product}
-                            />
-                          ))}
+                        {/* Search results header */}
+                        <div className="mb-8">
+                          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                            Search Results
+                          </h1>
+                          {/* Display active filters */}
+                          {(() => {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const query = urlParams.get('q');
+                            const brand = urlParams.get('brand');
+                            const minPrice = urlParams.get('minPrice');
+                            const maxPrice = urlParams.get('maxPrice');
+
+                            if (query || brand || minPrice || maxPrice) {
+                              return (
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                  {query && (
+                                    <div className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                                      Search: "{query}"
+                                    </div>
+                                  )}
+                                  {brand && (
+                                    <div className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                                      Brand: {brand}
+                                    </div>
+                                  )}
+                                  {(minPrice || maxPrice) && (
+                                    <div className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                                      Price: ${minPrice || '0'} - ${maxPrice || 'Any'}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
+
+                        {/* Search results */}
+                        {(() => {
+                          const searchResults = getSearchResults();
+
+                          if (searchResults.length === 0) {
+                            return (
+                              <div className="text-center py-12">
+                                <p className="text-gray-600 mb-4">No products found matching your search criteria.</p>
+                                <button
+                                  onClick={() => window.location.href = '/'}
+                                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                                >
+                                  Return to Home
+                                </button>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {searchResults.map(product => (
+                                <ProductCard
+                                  key={product._id}
+                                  product={product}
+                                />
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </section>
                     </main>
                   } />
@@ -266,3 +341,5 @@ function App() {
 }
 
 export default App;
+
+

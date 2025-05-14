@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types/user';
 import * as authService from '../services/authService';
+import { toast } from 'react-hot-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem('auth');
     setUser(null);
+    toast.success('Đăng xuất thành công');
   };
 
   const register = async (name: string, email: string, password: string, phone: string, address: string) => {

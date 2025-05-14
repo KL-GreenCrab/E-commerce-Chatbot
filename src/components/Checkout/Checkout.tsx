@@ -7,6 +7,7 @@ import { createOrder } from '../../services/orderService';
 import { getUser } from '../../services/userService';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../../hooks/useCart';
+import { useCartContext } from '../../hooks/CartProvider';
 
 interface CheckoutProps {
     cartItems: CartItem[];
@@ -27,6 +28,7 @@ interface OrderData {
 export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total }) => {
     const { user } = useAuth();
     const { clear } = useCart();
+    const { fetchCart } = useCartContext();
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -140,6 +142,8 @@ export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total }) => {
             console.log('Order created successfully:', order);
 
             await clear();
+            // Fetch cart to update the cart icon in header
+            await fetchCart();
             toast.success('Đặt hàng thành công!');
             navigate('/order-success', { state: { orderId: order._id } });
         } catch (error: any) {

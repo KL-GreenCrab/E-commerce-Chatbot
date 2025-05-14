@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu, ChevronDown, LogOut, X, Filter } from 'lucide-react';
 import { Product } from '../types';
 import { categories } from '../data/products';
@@ -39,8 +39,38 @@ export default function Header({
   const [selectedPriceRange, setSelectedPriceRange] = useState<{ min: number; max: number } | null>(null);
   const [priceSliderValue, setPriceSliderValue] = useState<[number, number]>([0, 3000]);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
   const { cartItems } = useCartContext();
+
+  // Parse URL parameters to sync UI state with URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+
+    // Get search query from URL
+    const urlQuery = searchParams.get('q');
+    if (urlQuery && urlQuery !== searchQuery) {
+      setSearchQuery(urlQuery);
+    }
+
+    // Get brand filter from URL
+    const urlBrand = searchParams.get('brand');
+    if (urlBrand && urlBrand !== selectedBrand) {
+      setSelectedBrand(urlBrand);
+      if (onBrandSelect) onBrandSelect(urlBrand);
+    }
+
+    // Get price range from URL
+    const urlMinPrice = searchParams.get('minPrice');
+    const urlMaxPrice = searchParams.get('maxPrice');
+    if (urlMinPrice && urlMaxPrice) {
+      const min = Number(urlMinPrice);
+      const max = Number(urlMaxPrice);
+      setSelectedPriceRange({ min, max });
+      setPriceSliderValue([min, max]);
+      if (onPriceRangeSelect) onPriceRangeSelect(min, max);
+    }
+  }, [location.search]);
 
   const brands = useMemo(() => Array.from(new Set(products.map(product => product.brand))), [products]);
   const minPrice = useMemo(() => products.length ? Math.min(...products.map(p => p.price)) : 0, [products]);
@@ -60,44 +90,130 @@ export default function Header({
     }
   };
 
+  // Helper function to update URL with filter parameters
+  const updateUrlWithFilters = (params: Record<string, string>) => {
+    const searchParams = new URLSearchParams(location.search);
+
+    // Update or add each parameter
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) {
+        searchParams.set(key, value);
+      } else {
+        searchParams.delete(key);
+      }
+    });
+
+    // If we're on a category page, keep the category
+    const path = location.pathname.includes('/category/')
+      ? location.pathname
+      : (location.pathname === '/search' ? '/search' : '/');
+
+    navigate({
+      pathname: path,
+      search: searchParams.toString() ? `?${searchParams.toString()}` : ''
+    });
+  };
+
   const handleCategorySelect = (categoryId: string) => {
     setIsCategoryDropdownOpen(false);
+
+    // Call the callback if provided
     if (onCategorySelect) {
       onCategorySelect(categoryId);
     }
-    navigate(`/category/${categoryId}`);
+
+    // If "all" is selected, navigate to home page with current filters
+    if (categoryId === "all") {
+      const searchParams = new URLSearchParams(location.search);
+      navigate({
+        pathname: '/',
+        search: searchParams.toString() ? `?${searchParams.toString()}` : ''
+      });
+    } else {
+      // Navigate to category page with current filters
+      const searchParams = new URLSearchParams(location.search);
+      navigate({
+        pathname: `/category/${categoryId}`,
+        search: searchParams.toString() ? `?${searchParams.toString()}` : ''
+      });
+    }
   };
 
   const handleBrandSelect = (brand: string) => {
     setSelectedBrand(brand);
+    setIsFilterDropdownOpen(false);
+
+    // Call the callback if provided
     if (onBrandSelect) {
       onBrandSelect(brand);
     }
-    setIsFilterDropdownOpen(false);
+
+    // Update URL with brand filter
+    updateUrlWithFilters({ brand });
   };
 
   const handlePriceRangeSelect = (range: { min: number; max: number }) => {
     setSelectedPriceRange(range);
     setPriceSliderValue([range.min, range.max]);
+    setIsFilterDropdownOpen(false);
+
+    // Call the callback if provided
     if (onPriceRangeSelect) {
       onPriceRangeSelect(range.min, range.max);
     }
-    setIsFilterDropdownOpen(false);
+
+    // Update URL with price range
+    updateUrlWithFilters({
+      minPrice: range.min.toString(),
+      maxPrice: range.max.toString()
+    });
   };
 
   const handlePriceSliderChange = (values: [number, number]) => {
     setPriceSliderValue(values);
+
+    // Call the callback if provided
     if (onPriceRangeSelect) {
       onPriceRangeSelect(values[0], values[1]);
     }
+
+    // Don't update URL immediately for slider to avoid too many history entries
+    // We'll update when the user stops sliding
+  };
+
+  // Debounced version of price slider change to update URL
+  const handlePriceSliderChangeEnd = () => {
+    // Update URL with current slider values
+    updateUrlWithFilters({
+      minPrice: priceSliderValue[0].toString(),
+      maxPrice: priceSliderValue[1].toString()
+    });
   };
 
   const clearFilters = () => {
+    // Reset state
     setSelectedBrand(null);
     setSelectedPriceRange(null);
     setPriceSliderValue([minPrice, maxPrice]);
+
+    // Call callbacks if provided
     if (onBrandSelect) onBrandSelect('');
     if (onPriceRangeSelect) onPriceRangeSelect(minPrice, maxPrice);
+
+    // Remove filter parameters from URL
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.delete('brand');
+    searchParams.delete('minPrice');
+    searchParams.delete('maxPrice');
+
+    // Keep the search query if present
+    const query = searchParams.get('q');
+
+    // Navigate to current path without filter parameters
+    navigate({
+      pathname: location.pathname,
+      search: query ? `?q=${query}` : ''
+    });
   };
 
   return (
@@ -123,8 +239,14 @@ export default function Header({
               {isCategoryDropdownOpen && (
                 <div className="absolute top-full left-0 w-64 bg-white rounded-lg shadow-lg py-2 mt-2">
                   <div className="px-4 py-2 border-b">
-                    <h3 className="font-semibold text-gray-900">All Categories</h3>
+                    <h3 className="font-semibold text-gray-900">Categories</h3>
                   </div>
+                  <button
+                    onClick={() => handleCategorySelect("all")}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700 font-medium"
+                  >
+                    All Categories
+                  </button>
                   {categories.map((category: import("../types").Category) => (
                     <button
                       key={category.id}
@@ -179,6 +301,8 @@ export default function Header({
                           max={maxPrice}
                           value={priceSliderValue[0]}
                           onChange={(e) => handlePriceSliderChange([Number(e.target.value), priceSliderValue[1]])}
+                          onMouseUp={handlePriceSliderChangeEnd}
+                          onTouchEnd={handlePriceSliderChangeEnd}
                           className="w-full"
                         />
                         <input
@@ -187,6 +311,8 @@ export default function Header({
                           max={maxPrice}
                           value={priceSliderValue[1]}
                           onChange={(e) => handlePriceSliderChange([priceSliderValue[0], Number(e.target.value)])}
+                          onMouseUp={handlePriceSliderChangeEnd}
+                          onTouchEnd={handlePriceSliderChangeEnd}
                           className="w-full"
                         />
                         <div className="flex justify-between text-sm text-gray-600 mt-1">
@@ -341,6 +467,12 @@ export default function Header({
                   Categories
                 </h3>
                 <div className="mt-2 space-y-1">
+                  <button
+                    onClick={() => handleCategorySelect("all")}
+                    className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50 font-medium"
+                  >
+                    All Categories
+                  </button>
                   {categories.map(category => (
                     <button
                       key={category.id}

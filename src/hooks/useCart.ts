@@ -91,6 +91,7 @@ export const useCart = () => {
             console.log('Cart cleared');
         } catch (error) {
             console.error('Error clearing cart:', error);
+            // Even if there's an error with the API, still clear the local cart
             setCartItems([]);
         }
     };

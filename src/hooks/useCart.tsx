@@ -130,17 +130,20 @@ export function useCart() {
             console.error('Invalid user ID format in clear:', user._id);
             // Just clear the local cart without calling the API
             setCart([]);
+            setCartItems([]);
             return;
         }
 
         try {
             await cartService.clearCart(user._id);
             setCart([]);
+            setCartItems([]);
         } catch (error) {
             console.error('Error clearing cart:', error);
             toast.error('Could not clear cart. Please try again.');
             // Still clear the local cart even if the API call fails
             setCart([]);
+            setCartItems([]);
         }
     };
 
