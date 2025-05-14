@@ -14,13 +14,13 @@ interface CartProps {
 
 export const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
-    const { cart, loading, updateQuantity, remove, getTotal } = useCart();
+    const { cart, cartItems, loading, updateQuantity, remove, getTotal, isEmpty: isCartEmpty } = useCart();
     const navigate = useNavigate();
     const [showCheckout, setShowCheckout] = useState(false);
 
     if (!isOpen) return null;
 
-    const isEmpty = cart.length === 0;
+    const isEmpty = isCartEmpty();
 
     const handleUpdateQuantity = (productId: string, quantity: number) => {
         if (quantity === 0) {
@@ -64,7 +64,7 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {cart.map(item => (
+                                {cartItems.map(item => (
                                     <div key={item.productId} className="p-4 flex items-center gap-4">
                                         <img
                                             src={item.image}
@@ -137,7 +137,7 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                                 <X className="h-5 w-5" />
                             </button>
                             <Checkout
-                                cartItems={cart}
+                                cartItems={cartItems}
                                 total={getTotal()}
                                 onPlaceOrder={async () => { setShowCheckout(false); }}
                             />
@@ -147,4 +147,4 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
             </div>
         </div>
     );
-}; 
+};

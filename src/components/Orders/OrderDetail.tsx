@@ -11,13 +11,19 @@ export const OrderDetail: React.FC = () => {
 
     useEffect(() => {
         const fetchOrder = async () => {
-            if (!id) return;
+            if (!id) {
+                setIsLoading(false);
+                return;
+            }
 
             try {
+                console.log('Fetching order details for ID:', id);
                 const orderData = await getOrderById(id);
+                console.log('Order data received:', orderData._id);
                 setOrder(orderData);
             } catch (error) {
                 console.error('Error fetching order:', error);
+                // Có thể hiển thị thông báo lỗi cho người dùng ở đây
             } finally {
                 setIsLoading(false);
             }
@@ -67,14 +73,37 @@ export const OrderDetail: React.FC = () => {
                 <div>
                     <h3 className="text-lg font-semibold mb-4">Thông tin giao hàng</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <p className="text-sm text-gray-500">Địa chỉ</p>
-                            <p className="font-medium">{order.address || 'Chưa cập nhật'}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Số điện thoại</p>
-                            <p className="font-medium">{order.phone || 'Chưa cập nhật'}</p>
-                        </div>
+                        {order.shippingAddress ? (
+                            <>
+                                <div>
+                                    <p className="text-sm text-gray-500">Người nhận</p>
+                                    <p className="font-medium">{order.shippingAddress.fullName}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Số điện thoại</p>
+                                    <p className="font-medium">{order.shippingAddress.phone}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Địa chỉ</p>
+                                    <p className="font-medium">{order.shippingAddress.address}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Thành phố</p>
+                                    <p className="font-medium">{order.shippingAddress.city}</p>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div>
+                                    <p className="text-sm text-gray-500">Địa chỉ</p>
+                                    <p className="font-medium">{order.address || 'Chưa cập nhật'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Số điện thoại</p>
+                                    <p className="font-medium">{order.phone || 'Chưa cập nhật'}</p>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -131,4 +160,4 @@ export const OrderDetail: React.FC = () => {
     );
 };
 
-export default OrderDetail; 
+export default OrderDetail;

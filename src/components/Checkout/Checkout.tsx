@@ -24,13 +24,14 @@ interface OrderData {
     note?: string;
 }
 
-export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total, onPlaceOrder }) => {
+export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total }) => {
     const { user } = useAuth();
     const { clear } = useCart();
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState<OrderData>({
         fullName: '',
         email: '',
@@ -43,24 +44,30 @@ export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total, onPlaceOrd
 
     useEffect(() => {
         const fetchUserData = async () => {
-            if (user?._id) {
-                try {
-                    setIsLoading(true);
-                    const userData = await getUser(user._id);
-                    setFormData(prev => ({
-                        ...prev,
-                        fullName: userData.name,
-                        email: userData.email,
-                        phone: userData.phone,
-                        address: userData.address,
-                        city: userData.city || ''
-                    }));
-                } catch (error) {
-                    toast.error('Không thể lấy thông tin người dùng');
-                    console.error('Error fetching user data:', error);
-                } finally {
-                    setIsLoading(false);
-                }
+            if (!user?._id) {
+                setIsLoading(false);
+                setError('Please log in to continue checkout');
+                return;
+            }
+
+            try {
+                setIsLoading(true);
+                const userData = await getUser(user._id);
+                setFormData(prev => ({
+                    ...prev,
+                    fullName: userData.name || '',
+                    email: userData.email || '',
+                    phone: userData.phone || '',
+                    address: userData.address || '',
+                    city: userData.city || ''
+                }));
+                setError(null);
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                toast.error('Không thể lấy thông tin người dùng');
+                setError('Could not load your information. Please try again.');
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -80,7 +87,29 @@ export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total, onPlaceOrd
     const handleConfirmOrder = async () => {
         setIsSubmitting(true);
         try {
-            const order = await createOrder({
+            if (!user?._id) {
+                throw new Error('You must be logged in to place an order');
+            }
+
+            if (!cartItems || cartItems.length === 0) {
+                throw new Error('Your cart is empty');
+            }
+
+            // Log authentication state
+            const auth = localStorage.getItem('auth');
+            console.log('Auth state exists:', !!auth);
+            if (auth) {
+                try {
+                    const authData = JSON.parse(auth);
+                    console.log('Token exists:', !!authData.token);
+                    // Don't log the actual token for security reasons
+                } catch (e) {
+                    console.error('Error parsing auth data:', e);
+                }
+            }
+
+            // Prepare order data
+            const orderData = {
                 items: cartItems.map(item => ({
                     productId: item.productId,
                     name: item.name,
@@ -102,12 +131,36 @@ export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total, onPlaceOrd
                     zipCode: '000000',
                     phone: formData.phone
                 }
-            });
+            };
+
+            console.log('Submitting order with data:', JSON.stringify(orderData, null, 2));
+
+            // Create the order
+            const order = await createOrder(orderData);
+            console.log('Order created successfully:', order);
+
             await clear();
             toast.success('Đặt hàng thành công!');
             navigate('/order-success', { state: { orderId: order._id } });
-        } catch (error) {
-            toast.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+        } catch (error: any) {
+            console.error('Order error:', error);
+            // Provide more detailed error message
+            let errorMessage = 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.';
+
+            if (error.message) {
+                errorMessage = error.message;
+                // Check for specific error patterns
+                if (error.message.includes('Unauthorized')) {
+                    errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+                    // Redirect to login page
+                    setTimeout(() => navigate('/login'), 2000);
+                } else if (error.message.includes('productId không hợp lệ')) {
+                    errorMessage = 'Có sản phẩm không hợp lệ trong giỏ hàng. Vui lòng làm mới trang và thử lại.';
+                }
+            }
+
+            toast.error(errorMessage);
+            setError(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
@@ -118,6 +171,40 @@ export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total, onPlaceOrd
             <div className="container mx-auto px-4 py-8">
                 <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <strong className="font-bold">Error: </strong>
+                    <span className="block sm:inline">{error}</span>
+                    <button
+                        className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                        onClick={() => navigate('/')}
+                    >
+                        Return to Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!cartItems || cartItems.length === 0) {
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative" role="alert">
+                    <strong className="font-bold">Your cart is empty. </strong>
+                    <span className="block sm:inline">Add some items to your cart before checkout.</span>
+                    <button
+                        className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                        onClick={() => navigate('/')}
+                    >
+                        Continue Shopping
+                    </button>
                 </div>
             </div>
         );
@@ -321,4 +408,4 @@ export const Checkout: React.FC<CheckoutProps> = ({ cartItems, total, onPlaceOrd
             </div>
         </div>
     );
-}; 
+};

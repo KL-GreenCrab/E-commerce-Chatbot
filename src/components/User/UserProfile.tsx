@@ -4,15 +4,18 @@ import { useNavigate, Link } from 'react-router-dom';
 import { User, LogOut, Edit, Save, X, ShoppingBag } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getUser, updateUser } from '../../services/userService';
+import axios from 'axios';
 
 export const UserProfile: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, login } = useAuth();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
-        address: user?.address || ''
+        phone: user?.phone || '',
+        address: user?.address || '',
+        city: user?.city || ''
     });
     const [loading, setLoading] = useState(false);
 
@@ -20,7 +23,13 @@ export const UserProfile: React.FC = () => {
         if (user?._id) {
             setLoading(true);
             getUser(user._id)
-                .then(data => setFormData({ name: data.name, email: data.email, address: data.address }))
+                .then(data => setFormData({
+                    name: data.name,
+                    email: data.email,
+                    phone: data.phone,
+                    address: data.address,
+                    city: data.city
+                }))
                 .catch(() => toast.error('Không lấy được thông tin tài khoản'))
                 .finally(() => setLoading(false));
         }
@@ -53,11 +62,13 @@ export const UserProfile: React.FC = () => {
     const handleSave = async () => {
         try {
             setLoading(true);
-            await updateUser(user._id, {
-                name: formData.name,
-                phone: user.phone,
-                address: formData.address
+            const token = localStorage.getItem('token');
+            const response = await axios.put('http://localhost:5000/api/users/profile', formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
+            login(token!, response.data);
             toast.success('Thông tin đã được cập nhật');
             setIsEditing(false);
         } catch {
@@ -77,7 +88,17 @@ export const UserProfile: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-2xl mx-auto">
                 <div className="bg-white rounded-lg shadow-md p-6">
-                    <h1 className="text-2xl font-bold mb-6">Thông tin tài khoản</h1>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold">Thông tin cá nhân</h2>
+                        {user.role === 'admin' && (
+                            <button
+                                onClick={() => navigate('/admin/add-product')}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                            >
+                                Thêm sản phẩm
+                            </button>
+                        )}
+                    </div>
 
                     <div className="space-y-4">
                         <div>
@@ -102,7 +123,7 @@ export const UserProfile: React.FC = () => {
 
                         <div>
                             <p className="text-sm text-gray-500">Số điện thoại</p>
-                            <p className="font-medium">{user.phone}</p>
+                            <p className="font-medium">{formData.phone}</p>
                         </div>
 
                         <div>
@@ -117,6 +138,21 @@ export const UserProfile: React.FC = () => {
                                 />
                             ) : (
                                 <p className="font-medium">{formData.address}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <p className="text-sm text-gray-500">Thành phố</p>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    name="city"
+                                    value={formData.city}
+                                    onChange={handleInputChange}
+                                    className="border px-2 py-1 rounded w-full"
+                                />
+                            ) : (
+                                <p className="font-medium">{formData.city}</p>
                             )}
                         </div>
                     </div>

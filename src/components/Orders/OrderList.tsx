@@ -12,13 +12,19 @@ export const OrderList: React.FC = () => {
 
     useEffect(() => {
         const fetchOrders = async () => {
-            if (!user) return;
+            if (!user || !user._id) {
+                setIsLoading(false);
+                return;
+            }
 
             try {
+                console.log('Fetching orders for user:', user._id);
                 const userOrders = await getOrdersByUser(user._id);
+                console.log('Orders fetched:', userOrders.length);
                 setOrders(userOrders);
             } catch (error) {
                 console.error('Error fetching orders:', error);
+                // Hiển thị thông báo lỗi cho người dùng nếu cần
             } finally {
                 setIsLoading(false);
             }
@@ -115,4 +121,4 @@ export const OrderList: React.FC = () => {
             ))}
         </div>
     );
-}; 
+};

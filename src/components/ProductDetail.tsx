@@ -4,21 +4,19 @@ import { Star, ShoppingCart, Heart, ArrowLeft, Scale } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Product } from '../types';
 import { formatPrice } from '../utils/format';
-import { fetchProductById } from '../services/productService';
+import { fetchProductById, fetchProducts } from '../services/productService';
 import { ProductComparison } from './ProductComparison/ProductComparison';
 import { ProductSelector } from './ProductComparison/ProductSelector';
 import { useAuth } from '../hooks/useAuth';
-import { useCart } from '../hooks/useCart';
+import { useCartContext } from '../hooks/CartProvider';
 
-interface ProductDetailProps {
-  onAddToCart: (product: Product) => void;
-}
+interface ProductDetailProps {}
 
-export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
+export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { add } = useCart();
+  const { add } = useCartContext();
   const [selectedImage, setSelectedImage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
@@ -26,17 +24,50 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [isLoadingSimilarProducts, setIsLoadingSimilarProducts] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
     fetchProductById(id!)
-      .then(setProduct)
-      .catch(() => setProduct(null))
+      .then(productData => {
+        setProduct(productData);
+        return productData;
+      })
+      .catch(() => {
+        setProduct(null);
+        return null;
+      })
       .finally(() => setIsLoading(false));
   }, [id]);
 
+  // Lấy sản phẩm tương tự khi sản phẩm hiện tại thay đổi
+  useEffect(() => {
+    if (product && product.category) {
+      setIsLoadingSimilarProducts(true);
+      fetchProducts({ category: product.category })
+        .then(products => {
+          // Lọc ra các sản phẩm cùng danh mục nhưng khác sản phẩm hiện tại
+          const filtered = products.filter(p => p._id !== product._id);
+          setSimilarProducts(filtered);
+        })
+        .catch(error => {
+          console.error('Error fetching similar products:', error);
+          toast.error('Không thể tải sản phẩm tương tự');
+          setSimilarProducts([]);
+        })
+        .finally(() => setIsLoadingSimilarProducts(false));
+    }
+  }, [product]);
+
   const handleAddToComparison = () => {
     if (!product) return;
+
+    if (similarProducts.length === 0) {
+      toast.error('Không có sản phẩm nào để so sánh trong cùng danh mục');
+      return;
+    }
+
     setIsSelectorOpen(true);
   };
 
@@ -232,12 +263,13 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
 
       {isSelectorOpen && product && (
         <ProductSelector
-          products={[]}
+          products={similarProducts}
           selectedProducts={selectedProducts}
           currentProduct={product}
           onSelect={handleSelectProduct}
           onDeselect={handleDeselectProduct}
           onClose={handleCloseSelector}
+          isLoading={isLoadingSimilarProducts}
         />
       )}
 

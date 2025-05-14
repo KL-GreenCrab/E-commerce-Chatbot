@@ -36,9 +36,22 @@ export const createOrder = async (orderData: {
         body: JSON.stringify(orderData),
     });
     if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error response:', errorData);
-        throw new Error(errorData.message || 'Failed to create order');
+        let errorMessage = 'Failed to create order';
+        try {
+            const errorData = await response.json();
+            console.error('Error response:', errorData);
+            errorMessage = errorData.message || errorMessage;
+        } catch (parseError) {
+            // If we can't parse the error as JSON, try to get the text
+            try {
+                const errorText = await response.text();
+                console.error('Error response text:', errorText);
+                errorMessage = errorText || errorMessage;
+            } catch (textError) {
+                console.error('Could not parse error response as text:', textError);
+            }
+        }
+        throw new Error(`Error creating order: ${errorMessage} (Status: ${response.status})`);
     }
     return response.json();
 };
@@ -85,4 +98,4 @@ export const getOrderById = async (orderId: string): Promise<Order> => {
         throw new Error('Failed to fetch order');
     }
     return response.json();
-}; 
+};

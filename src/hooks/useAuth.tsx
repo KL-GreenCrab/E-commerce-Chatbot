@@ -1,116 +1,71 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthState } from '../types';
+import { User } from '../types/user';
 import * as authService from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, phone: string, address: string) => Promise<void>;
   logout: () => void;
-  forgotPassword: (email: string) => Promise<void>;
-  resetPassword: (email: string, newPassword: string) => Promise<void>;
+  register: (name: string, email: string, password: string, phone: string, address: string) => Promise<void>;
   isLoading: boolean;
+  isAuthReady: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authState, setAuthState] = useState<AuthState>(() => {
-    const savedAuth = localStorage.getItem('auth');
-    return savedAuth ? JSON.parse(savedAuth) : { user: null, token: null };
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('auth', JSON.stringify(authState));
-  }, [authState]);
+    const auth = localStorage.getItem('auth');
+    if (auth) {
+      const { user } = JSON.parse(auth);
+      setUser({ ...user, role: user.role || 'user' });
+    }
+    setIsAuthReady(true);
+  }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await authService.login({ email, password });
-      if (!response.token || !response.user) {
-        throw new Error('Invalid response from server');
-      }
-      console.log('User after login:', response.user);
-      setAuthState({
-        user: response.user,
-        token: response.token
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const register = async (name: string, email: string, password: string, phone: string, address: string) => {
-    setIsLoading(true);
-    try {
-      const response = await authService.register({ name, email, password, phone, address });
-      localStorage.setItem('auth', JSON.stringify({ token: response.token }));
-      setAuthState({
-        user: response.user,
-        token: response.token
-      });
-      return response;
-    } catch (error) {
-      console.error('Register error:', error);
-      throw error;
+      if (!response.ok) throw new Error('Login failed');
+      const data = await response.json();
+      const userWithRole = { ...data.user, role: data.user.role || 'user' };
+      localStorage.setItem('auth', JSON.stringify({ token: data.token, user: userWithRole }));
+      setUser(userWithRole);
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = () => {
-    setIsLoading(true);
-    try {
-      // Clear auth data from localStorage
-      localStorage.removeItem('auth');
-
-      // Update state
-      setAuthState({ user: null, token: null });
-
-      // Call the auth service logout method
-      authService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    localStorage.removeItem('auth');
+    setUser(null);
   };
 
-  const forgotPassword = async (email: string) => {
+  const register = async (name: string, email: string, password: string, phone: string, address: string) => {
     setIsLoading(true);
     try {
-      await authService.forgotPassword(email);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetPassword = async (email: string, newPassword: string) => {
-    setIsLoading(true);
-    try {
-      await authService.resetPassword(email, newPassword);
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, phone, address })
+      });
+      if (!response.ok) throw new Error('Registration failed');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user: authState.user,
-        login,
-        register,
-        logout,
-        forgotPassword,
-        resetPassword,
-        isLoading
-      }}
-    >
+    <AuthContext.Provider value={{ user, login, logout, register, isLoading, isAuthReady }}>
       {children}
     </AuthContext.Provider>
   );

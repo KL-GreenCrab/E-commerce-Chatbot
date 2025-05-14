@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu, ChevronDown, LogOut, X, Filter } from 'lucide-react';
-import { CartItem, Product } from '../types';
+import { Product } from '../types';
 import { categories } from '../data/products';
 import { SearchBar } from './SearchBar';
 import { useAuth } from '../hooks/useAuth';
+import { useCartContext } from '../hooks/CartProvider';
 
 interface HeaderProps {
   products: Product[];
-  cartItems: CartItem[];
   onCartClick: () => void;
   onSearch?: (query: string) => void;
   onCategorySelect?: (categoryId: string) => void;
@@ -25,7 +25,6 @@ const priceRanges = [
 
 export default function Header({
   products,
-  cartItems,
   onCartClick,
   onSearch,
   onCategorySelect,
@@ -41,6 +40,7 @@ export default function Header({
   const [priceSliderValue, setPriceSliderValue] = useState<[number, number]>([0, 3000]);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { cartItems } = useCartContext();
 
   const brands = useMemo(() => Array.from(new Set(products.map(product => product.brand))), [products]);
   const minPrice = useMemo(() => products.length ? Math.min(...products.map(p => p.price)) : 0, [products]);

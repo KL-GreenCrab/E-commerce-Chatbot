@@ -5,11 +5,9 @@ import ProductCard from '../ProductCard';
 import { Product, Category } from '../../types';
 import { fetchProducts } from '../../services/productService';
 
-interface CategoryPageProps {
-    onAddToCart: (product: Product) => void;
-}
+interface CategoryPageProps {}
 
-export default function CategoryPage({ onAddToCart }: CategoryPageProps) {
+export default function CategoryPage() {
     const { categoryId } = useParams<{ categoryId: string }>();
     const navigate = useNavigate();
     const [products, setProducts] = useState<Product[]>([]);
@@ -67,7 +65,6 @@ export default function CategoryPage({ onAddToCart }: CategoryPageProps) {
                             <ProductCard
                                 key={product._id}
                                 product={product}
-                                onAddToCart={onAddToCart}
                             />
                         ))}
                     </div>
@@ -81,4 +78,4 @@ export default function CategoryPage({ onAddToCart }: CategoryPageProps) {
             </main>
         </div>
     );
-} 
+}

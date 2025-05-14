@@ -5,17 +5,16 @@ import { Product } from '../types';
 import { formatPrice } from '../utils/format';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-hot-toast';
-import { useCart } from '../hooks/useCart';
+import { useCartContext } from '../hooks/CartProvider';
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product) => void;
 }
 
-export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export default function ProductCard({ product }: ProductCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { add } = useCart();
+  const { add } = useCartContext();
 
   const handleProductClick = () => {
     navigate(`/product/${product._id}`);
