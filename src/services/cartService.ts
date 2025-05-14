@@ -1,6 +1,7 @@
 import { CartItem } from '../types';
 
-const API_URL = 'http://localhost:5000/api/cart';
+// Sử dụng URL tương đối để tận dụng proxy trong vite.config.ts
+const API_URL = '/api/cart';
 
 // Validate MongoDB ObjectId format
 const isValidObjectId = (id: string): boolean => {

@@ -28,6 +28,8 @@ import AddProduct from './components/Admin/AddProduct';
 import PrivateRoute from './components/Auth/PrivateRoute';
 import AdminRoute from './components/Auth/AdminRoute';
 import AdminAddProductPage from './pages/AdminAddProductPage';
+import AdminEditProductPage from './pages/AdminEditProductPage';
+import AdminProductsPage from './pages/AdminProductsPage';
 import AdminOrderListPage from './pages/AdminOrderListPage';
 import AdminOrderDetailPage from './pages/AdminOrderDetailPage';
 import CheckoutPage from './pages/CheckoutPage';
@@ -203,10 +205,26 @@ function App() {
                     {/* KHÔNG có route con add-product ở đây */}
                   </Route>
                   <Route
+                    path="/admin/products"
+                    element={
+                      <AdminRoute>
+                        <AdminProductsPage />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
                     path="/admin/add-product"
                     element={
                       <AdminRoute>
                         <AdminAddProductPage />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/edit-product/:id"
+                    element={
+                      <AdminRoute>
+                        <AdminEditProductPage />
                       </AdminRoute>
                     }
                   />

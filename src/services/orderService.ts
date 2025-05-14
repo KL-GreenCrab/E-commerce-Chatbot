@@ -1,6 +1,7 @@
 import { Order, OrderData } from '../types';
 
-const API_URL = 'http://localhost:5000/api';
+// Sử dụng URL tương đối để tận dụng proxy trong vite.config.ts
+const API_URL = '/api';
 
 // Tạo đơn hàng mới
 export const createOrder = async (orderData: {

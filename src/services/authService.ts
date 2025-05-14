@@ -23,7 +23,8 @@ const isEmailExists = (email: string): boolean => {
     return users.some(user => user.email === email);
 };
 
-const API_URL = 'http://localhost:5000/api/auth';
+// Sử dụng URL tương đối để tận dụng proxy trong vite.config.ts
+const API_URL = '/api/auth';
 
 export async function register(data: { email: string; password: string; name: string; phone: string; address: string }) {
     const res = await fetch(`${API_URL}/register`, {
@@ -80,4 +81,4 @@ export const resetPassword = async (email: string, newPassword: string): Promise
         return user;
     });
     saveRegisteredUsers(updatedUsers);
-}; 
+};

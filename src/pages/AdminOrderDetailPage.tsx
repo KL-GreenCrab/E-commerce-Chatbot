@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useAuth } from '../hooks/useAuth';
+import { getOrderById, updateOrder } from '../services/adminService';
 
 const AdminOrderDetailPage = () => {
     const { id } = useParams();
@@ -13,19 +13,23 @@ const AdminOrderDetailPage = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (isAuthReady && user?.role === 'admin' && id) {
-            const auth = localStorage.getItem('auth');
-            const token = auth ? JSON.parse(auth).token : null;
-            axios.get(`http://localhost:5000/api/admin/orders`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-                .then(res => {
-                    const found = res.data.find((o: any) => o._id === id);
-                    setOrder(found);
-                    setEditData(found);
-                })
-                .finally(() => setLoading(false));
-        }
+        const fetchOrder = async () => {
+            if (isAuthReady && user?.role === 'admin' && id) {
+                try {
+                    setLoading(true);
+                    const orderData = await getOrderById(id);
+                    setOrder(orderData);
+                    setEditData(orderData);
+                } catch (error) {
+                    console.error('Error fetching order:', error);
+                    toast.error('Không thể tải thông tin đơn hàng');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchOrder();
     }, [id, user, isAuthReady]);
 
     if (!isAuthReady) return <div>Loading...</div>;
@@ -40,15 +44,30 @@ const AdminOrderDetailPage = () => {
 
     const handleSave = async () => {
         try {
-            const auth = localStorage.getItem('auth');
-            const token = auth ? JSON.parse(auth).token : null;
-            await axios.put(`http://localhost:5000/api/admin/orders/${id}`, editData, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            // Xác nhận trước khi cập nhật
+            if (!window.confirm('Bạn có chắc chắn muốn cập nhật đơn hàng này?')) {
+                return;
+            }
+
+            // Kiểm tra dữ liệu trước khi gửi
+            if (editData.total && Number(editData.total) < 0) {
+                toast.error('Tổng tiền không thể âm');
+                return;
+            }
+
+            // Chuẩn bị dữ liệu
+            const orderData = {
+                ...editData,
+                total: editData.total ? Number(editData.total) : 0
+            };
+
+            // Gọi API cập nhật
+            await updateOrder(id!, orderData);
             toast.success('Cập nhật đơn hàng thành công!');
             navigate('/admin/orders');
-        } catch (error) {
-            toast.error('Có lỗi khi cập nhật đơn hàng');
+        } catch (error: any) {
+            toast.error(`Có lỗi khi cập nhật đơn hàng: ${error.message || 'Lỗi không xác định'}`);
+            console.error('Error updating order:', error);
         }
     };
 
@@ -108,4 +127,4 @@ const AdminOrderDetailPage = () => {
     );
 };
 
-export default AdminOrderDetailPage; 
+export default AdminOrderDetailPage;

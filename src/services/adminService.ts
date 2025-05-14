@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { Product } from '../types/product';
 
-const API_URL = 'http://localhost:5000/api';
+// Sử dụng URL tương đối để tận dụng proxy trong vite.config.ts
+const API_URL = '/api';
 
 function getToken() {
     const auth = localStorage.getItem('auth');
@@ -12,6 +13,17 @@ function getToken() {
 export const getProducts = async (): Promise<Product[]> => {
     const token = getToken();
     const response = await axios.get(`${API_URL}/products`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return response.data;
+};
+
+// Lấy thông tin sản phẩm theo ID
+export const getProductById = async (id: string): Promise<Product> => {
+    const token = getToken();
+    const response = await axios.get(`${API_URL}/products/${id}`, {
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -62,11 +74,36 @@ export const getOrders = async () => {
     return response.data;
 };
 
+// Lấy thông tin đơn hàng theo ID
+export const getOrderById = async (id: string) => {
+    const token = getToken();
+    const response = await axios.get(`${API_URL}/admin/orders/${id}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return response.data;
+};
+
 // Cập nhật trạng thái đơn hàng
 export const updateOrderStatus = async (orderId: string, status: string) => {
     const token = getToken();
     const response = await axios.put(`${API_URL}/orders/${orderId}/status`,
         { status },
+        {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        }
+    );
+    return response.data;
+};
+
+// Cập nhật thông tin đơn hàng
+export const updateOrder = async (orderId: string, orderData: any) => {
+    const token = getToken();
+    const response = await axios.put(`${API_URL}/admin/orders/${orderId}`,
+        orderData,
         {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -85,4 +122,4 @@ export const getDashboardStats = async () => {
         }
     });
     return response.data;
-}; 
+};
