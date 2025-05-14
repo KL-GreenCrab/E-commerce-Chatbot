@@ -31,6 +31,7 @@ import AdminAddProductPage from './pages/AdminAddProductPage';
 import AdminOrderListPage from './pages/AdminOrderListPage';
 import AdminOrderDetailPage from './pages/AdminOrderDetailPage';
 import CheckoutPage from './pages/CheckoutPage';
+import { Chatbot } from './components/Chatbot';
 
 // Wrapper component to handle page transitions
 function PageTransition({ children }: { children: React.ReactNode }) {
@@ -235,6 +236,8 @@ function App() {
               isOpen={isCartOpen}
               onClose={() => setIsCartOpen(false)}
             />
+
+            <Chatbot />
 
             <ToastContainer />
           </div>
