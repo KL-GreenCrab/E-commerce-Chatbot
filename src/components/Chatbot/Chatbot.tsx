@@ -17,6 +17,9 @@ interface Message {
     sender: 'user' | 'bot';
     timestamp: Date;
     products?: Product[];
+    category?: string;
+    brands?: string[];
+    intent?: string;
 }
 
 export const Chatbot: React.FC = () => {
@@ -32,7 +35,7 @@ export const Chatbot: React.FC = () => {
             setMessages([
                 {
                     id: '1',
-                    text: 'Xin chào! Tôi là trợ lý ảo của cửa hàng. Tôi có thể giúp gì cho bạn?',
+                    text: 'Xin chào! Tôi là trợ lý ảo của cửa hàng. Tôi có thể giúp bạn tìm sản phẩm theo loại, thương hiệu hoặc tầm giá. Bạn cần tôi tư vấn gì?',
                     sender: 'bot',
                     timestamp: new Date(),
                 },
@@ -45,22 +48,24 @@ export const Chatbot: React.FC = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSendMessage = async () => {
-        if (!input.trim()) return;
+    const handleSendMessage = async (customMessage?: string) => {
+        const messageText = customMessage || input;
+
+        if (!messageText.trim()) return;
 
         // Thêm tin nhắn của người dùng
         const userMessage: Message = {
             id: Date.now().toString(),
-            text: input,
+            text: messageText,
             sender: 'user',
             timestamp: new Date(),
         };
 
-        // Lưu input trước khi xóa
-        const messageText = input;
+        if (!customMessage) {
+            setMessages(prev => [...prev, userMessage]);
+            setInput('');
+        }
 
-        setMessages(prev => [...prev, userMessage]);
-        setInput('');
         setIsLoading(true);
 
         try {
@@ -89,6 +94,9 @@ export const Chatbot: React.FC = () => {
                 sender: 'bot',
                 timestamp: new Date(),
                 products: data.products,
+                category: data.category,
+                brands: data.brands,
+                intent: data.intent,
             };
 
             setMessages(prev => [...prev, botMessage]);
@@ -140,6 +148,20 @@ export const Chatbot: React.FC = () => {
         }).format(price);
     };
 
+    // Lấy tên hiển thị của danh mục
+    const getCategoryDisplayName = (category?: string) => {
+        if (!category) return '';
+
+        const categoryNames: Record<string, string> = {
+            'Smartphones': 'điện thoại',
+            'Laptops': 'laptop',
+            'Tablets': 'máy tính bảng',
+            'Accessories': 'phụ kiện'
+        };
+
+        return categoryNames[category] || category.toLowerCase();
+    };
+
     return (
         <div className="fixed bottom-4 right-4 z-50">
             {/* Nút mở chatbot */}
@@ -186,6 +208,118 @@ export const Chatbot: React.FC = () => {
                                     }`}
                                 >
                                     <p className="text-sm">{message.text}</p>
+
+                                    {/* Hiển thị thương hiệu theo danh mục nếu có */}
+                                    {message.brands && message.brands.length > 0 && (
+                                        <div className="mt-3">
+                                            <p className="font-medium text-gray-700 mb-2">Thương hiệu trong danh mục {getCategoryDisplayName(message.category)}:</p>
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {message.brands.map(brand => (
+                                                    <button
+                                                        key={brand}
+                                                        onClick={() => {
+                                                            const brandMessage = `Tôi muốn xem sản phẩm của ${brand}`;
+                                                            setMessages(prev => [
+                                                                ...prev,
+                                                                {
+                                                                    id: Date.now().toString(),
+                                                                    text: brandMessage,
+                                                                    sender: 'user',
+                                                                    timestamp: new Date(),
+                                                                }
+                                                            ]);
+                                                            handleSendMessage(brandMessage);
+                                                        }}
+                                                        className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm py-1 px-3 rounded-full transition-colors"
+                                                    >
+                                                        {brand}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Hiển thị gợi ý tầm giá khi có sản phẩm và intent là product_search hoặc brand_recommendation */}
+                                    {message.products && message.products.length > 0 &&
+                                     (message.intent === 'product_search' || message.intent === 'brand_recommendation') && (
+                                        <div className="mt-3 mb-3">
+                                            <p className="font-medium text-gray-700 mb-2">Bạn quan tâm đến tầm giá nào?</p>
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                <button
+                                                    onClick={() => {
+                                                        const priceMessage = "Tôi muốn tìm sản phẩm dưới 500 USD";
+                                                        setMessages(prev => [
+                                                            ...prev,
+                                                            {
+                                                                id: Date.now().toString(),
+                                                                text: priceMessage,
+                                                                sender: 'user',
+                                                                timestamp: new Date(),
+                                                            }
+                                                        ]);
+                                                        handleSendMessage(priceMessage);
+                                                    }}
+                                                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm py-1 px-3 rounded-full transition-colors"
+                                                >
+                                                    Dưới $500
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const priceMessage = "Tôi muốn tìm sản phẩm từ 500 đến 1000 USD";
+                                                        setMessages(prev => [
+                                                            ...prev,
+                                                            {
+                                                                id: Date.now().toString(),
+                                                                text: priceMessage,
+                                                                sender: 'user',
+                                                                timestamp: new Date(),
+                                                            }
+                                                        ]);
+                                                        handleSendMessage(priceMessage);
+                                                    }}
+                                                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm py-1 px-3 rounded-full transition-colors"
+                                                >
+                                                    $500 - $1000
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const priceMessage = "Tôi muốn tìm sản phẩm từ 1000 đến 2000 USD";
+                                                        setMessages(prev => [
+                                                            ...prev,
+                                                            {
+                                                                id: Date.now().toString(),
+                                                                text: priceMessage,
+                                                                sender: 'user',
+                                                                timestamp: new Date(),
+                                                            }
+                                                        ]);
+                                                        handleSendMessage(priceMessage);
+                                                    }}
+                                                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm py-1 px-3 rounded-full transition-colors"
+                                                >
+                                                    $1000 - $2000
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const priceMessage = "Tôi muốn tìm sản phẩm trên 2000 USD";
+                                                        setMessages(prev => [
+                                                            ...prev,
+                                                            {
+                                                                id: Date.now().toString(),
+                                                                text: priceMessage,
+                                                                sender: 'user',
+                                                                timestamp: new Date(),
+                                                            }
+                                                        ]);
+                                                        handleSendMessage(priceMessage);
+                                                    }}
+                                                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm py-1 px-3 rounded-full transition-colors"
+                                                >
+                                                    Trên $2000
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Hiển thị sản phẩm nếu có */}
                                     {message.products && message.products.length > 0 && (
@@ -262,7 +396,7 @@ export const Chatbot: React.FC = () => {
                                 className="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                             <button
-                                onClick={handleSendMessage}
+                                onClick={() => handleSendMessage()}
                                 disabled={isLoading || !input.trim()}
                                 className="bg-red-600 text-white px-4 py-2 rounded-r-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 aria-label="Gửi tin nhắn"
@@ -271,7 +405,7 @@ export const Chatbot: React.FC = () => {
                             </button>
                         </div>
                         <div className="text-xs text-gray-500 mt-2 text-center">
-                            Hỏi về sản phẩm, vận chuyển, thanh toán hoặc đổi trả
+                            Hỏi về loại sản phẩm, thương hiệu, tầm giá, vận chuyển, thanh toán hoặc đổi trả
                         </div>
                     </div>
                 </div>
