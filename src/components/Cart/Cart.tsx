@@ -14,7 +14,7 @@ interface CartProps {
 
 export const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
-    const { cart, cartItems, loading, updateQuantity, remove, getTotal, isEmpty: isCartEmpty } = useCart();
+    const { cartItems, loading, updateQuantity, remove, getTotal, isEmpty: isCartEmpty } = useCart();
     const navigate = useNavigate();
     const [showCheckout, setShowCheckout] = useState(false);
 
@@ -22,12 +22,14 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 
     const isEmpty = isCartEmpty();
 
-    const handleUpdateQuantity = (productId: string, quantity: number) => {
-        if (quantity === 0) {
+    const handleUpdateQuantity = (productId: string, currentQuantity: number, action: 'increment' | 'decrement') => {
+        if (action === 'decrement' && currentQuantity <= 1) {
             remove(productId);
             return;
         }
-        updateQuantity(productId, quantity);
+
+        const newQuantity = action === 'increment' ? currentQuantity + 1 : currentQuantity - 1;
+        updateQuantity(productId, newQuantity);
     };
 
     const handleRemoveItem = (productId: string) => {
@@ -78,14 +80,14 @@ export const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                                             </p>
                                             <div className="flex items-center gap-2 mt-2">
                                                 <button
-                                                    onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
+                                                    onClick={() => handleUpdateQuantity(item.productId, item.quantity, 'decrement')}
                                                     className="p-1 rounded-full hover:bg-gray-100"
                                                 >
                                                     <Minus className="h-4 w-4" />
                                                 </button>
                                                 <span className="w-8 text-center">{item.quantity}</span>
                                                 <button
-                                                    onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
+                                                    onClick={() => handleUpdateQuantity(item.productId, item.quantity, 'increment')}
                                                     className="p-1 rounded-full hover:bg-gray-100"
                                                 >
                                                     <Plus className="h-4 w-4" />

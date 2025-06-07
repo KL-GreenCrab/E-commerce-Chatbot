@@ -35,7 +35,7 @@ export const useCart = () => {
             }
 
             console.log('Fetching cart for user:', user._id);
-            const cart = await cartService.getCart(user._id);
+            const cart = await cartService.fetchCart(user._id);
 
             if (cart && Array.isArray(cart.items)) {
                 console.log('Fetched cart items:', cart.items);
@@ -96,11 +96,42 @@ export const useCart = () => {
         }
     };
 
+    const updateQuantity = async (productId: string, quantity: number) => {
+        if (!user?._id) return;
+        try {
+            // Tìm sản phẩm hiện tại trong giỏ hàng
+            const currentItem = cartItems.find(item => item.productId === productId);
+            if (!currentItem) {
+                throw new Error('Item not found in cart');
+            }
+
+            // Cập nhật số lượng mới
+            await cartService.updateCartItemQuantity(user._id, productId, quantity);
+            await fetchCart();
+        } catch (error) {
+            console.error('Error updating quantity:', error);
+            toast.error('Could not update quantity');
+        }
+    };
+
+    const remove = async (productId: string) => {
+        if (!user?._id) return;
+        try {
+            await cartService.removeFromCart(user._id, productId);
+            await fetchCart();
+        } catch (error) {
+            console.error('Error removing item:', error);
+            toast.error('Could not remove item');
+        }
+    };
+
     return {
         cartItems,
         loading,
         add,
         clear,
+        updateQuantity,
+        remove,
         fetchCart,
         isEmpty: () => cartItems.length === 0,
         getTotal: () => cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
